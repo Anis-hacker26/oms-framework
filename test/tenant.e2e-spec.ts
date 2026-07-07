@@ -220,4 +220,164 @@ describe('Tenant API (e2e)', () => {
         .expect(400);
     });
   });
+  describe('PATCH /tenants/:id', () => {
+  it('should update tenant name', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        name: `Netflix Updated ${unique}`,
+      })
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe(
+      'Tenant updated successfully.',
+    );
+    expect(response.body.data.name).toBe(
+      `Netflix Updated ${unique}`,
+    );
+  });
+
+  it('should update tenant slug', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        slug: `netflix-updated-${unique}`,
+      })
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.slug).toBe(
+      `netflix-updated-${unique}`,
+    );
+  });
+
+  it('should update tenant contact email', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        contactEmail: `updated${unique}@netflix.com`,
+      })
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.contactEmail).toBe(
+      `updated${unique}@netflix.com`,
+    );
+  });
+
+  it('should update multiple fields', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        name: `Netflix Global ${unique}`,
+        slug: `netflix-global-${unique}`,
+      })
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.name).toBe(
+      `Netflix Global ${unique}`,
+    );
+    expect(response.body.data.slug).toBe(
+      `netflix-global-${unique}`,
+    );
+  });
+
+  it('should reject empty update payload', async () => {
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({})
+      .expect(400);
+  });
+
+  it('should reject update with same values', async () => {
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        name: `Netflix Global ${unique}`,
+      })
+      .expect(400);
+  });
+
+  it('should reject invalid uuid', async () => {
+    await request(app.getHttpServer())
+      .patch('/tenants/abc')
+      .send({
+        name: 'Google',
+      })
+      .expect(400);
+  });
+
+  it('should return 404 for unknown tenant', async () => {
+    await request(app.getHttpServer())
+      .patch(
+        '/tenants/123e4567-e89b-42d3-a456-426614174000',
+      )
+      .send({
+        name: 'Google',
+      })
+      .expect(404);
+  });
+
+  it('should reject duplicate name', async () => {
+    const duplicateName = `Microsoft Duplicate ${unique}`;
+
+    await request(app.getHttpServer())
+      .post('/tenants')
+      .send({
+        name: duplicateName,
+        slug: `microsoft-duplicate-${unique}`,
+        contactEmail: `duplicate${unique}@microsoft.com`,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        name: duplicateName,
+      })
+      .expect(409);
+  });
+
+  it('should reject duplicate slug', async () => {
+    const duplicateSlug = `duplicate-slug-${unique}`;
+
+    await request(app.getHttpServer())
+      .post('/tenants')
+      .send({
+        name: `Amazon ${unique}`,
+        slug: duplicateSlug,
+        contactEmail: `amazon${unique}@test.com`,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        slug: duplicateSlug,
+      })
+      .expect(409);
+  });
+
+  it('should reject duplicate contact email', async () => {
+    const duplicateEmail = `duplicate${unique}@gmail.com`;
+
+    await request(app.getHttpServer())
+      .post('/tenants')
+      .send({
+        name: `Apple ${unique}`,
+        slug: `apple-${unique}`,
+        contactEmail: duplicateEmail,
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}`)
+      .send({
+        contactEmail: duplicateEmail,
+      })
+      .expect(409);
+  });
+});
 });

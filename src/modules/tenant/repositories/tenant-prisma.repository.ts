@@ -8,6 +8,7 @@ import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto'
 import { CreateTenantDto } from '../dto/create-tenant.dto';
 import { TenantStatus } from '../enums/tenant-status.enum';
 import { TenantRepository } from '../interfaces/tenant.repository';
+import { UpdateTenantDto } from '../dto/update-tenant.dto';
 
 @Injectable()
 export class TenantPrismaRepository extends TenantRepository {
@@ -63,6 +64,7 @@ export class TenantPrismaRepository extends TenantRepository {
         },
       ];
     }
+    
 
     if (pageOptions.status === TenantStatus.ACTIVE) {
       where.isSuspended = false;
@@ -116,4 +118,27 @@ export class TenantPrismaRepository extends TenantRepository {
       },
     });
   }
+  async update(
+  id: string,
+  data: UpdateTenantDto,
+): Promise<Tenant> {
+  return this.prisma.tenant.update({
+    where: {
+      id,
+    },
+    data: {
+      ...(data.name !== undefined && {
+        name: data.name,
+      }),
+      ...(data.slug !== undefined && {
+        slug: data.slug,
+      }),
+      ...(data.contactEmail !==
+        undefined && {
+        contactEmail:
+          data.contactEmail,
+      }),
+    },
+  });
+}
 }

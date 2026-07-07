@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -8,12 +17,16 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 
 import { TenantService } from '../services/tenant.service';
+
 import { CreateTenantDto } from '../dto/create-tenant.dto';
+import { UpdateTenantDto } from '../dto/update-tenant.dto';
 import { TenantResponseDto } from '../dto/tenant-response.dto';
+
 import { TenantMessages } from '../constants/tenant.messages';
 
 import { SuccessMessage } from '../../../common/decorators/success-message.decorator';
@@ -24,30 +37,36 @@ import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto'
 @ApiTags('Tenant')
 @Controller('tenants')
 export class TenantController {
-  constructor(private readonly tenantService: TenantService) {}
+  constructor(
+    private readonly tenantService: TenantService,
+  ) {}
 
   @Post()
   @SuccessMessage(TenantMessages.CREATED)
   @ApiOperation({
     summary: 'Create Tenant',
     description:
-      'Creates a new tenant in the OMS Framework. Tenant name, slug, and contact email must all be unique.',
+      'Creates a new tenant in the OMS Framework.',
   })
   @ApiBody({
     type: CreateTenantDto,
-    description: 'Tenant creation request payload.',
+    description: 'Tenant creation request.',
   })
   @ApiCreatedResponse({
     description: TenantMessages.CREATED,
     type: TenantResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Validation failed. One or more request fields are invalid.',
+    description:
+      'Validation failed. One or more request fields are invalid.',
   })
   @ApiConflictResponse({
-    description: 'Tenant name, slug, or contact email already exists.',
+    description:
+      'Tenant name, slug or contact email already exists.',
   })
-  async create(@Body() dto: CreateTenantDto): Promise<TenantResponseDto> {
+  async create(
+    @Body() dto: CreateTenantDto,
+  ): Promise<TenantResponseDto> {
     return this.tenantService.create(dto);
   }
 
@@ -55,24 +74,28 @@ export class TenantController {
   @SuccessMessage(TenantMessages.RETRIEVED)
   @ApiOperation({
     summary: 'Get Tenant by ID',
-    description: 'Retrieves a tenant using its unique identifier.',
+    description:
+      'Retrieves a tenant using its unique identifier.',
   })
   @ApiParam({
     name: 'id',
     description: 'Tenant UUID',
-    example: 'df24b6f9-3768-4994-a41c-66a14fc6e0cd',
+    example:
+      'df24b6f9-3768-4994-a41c-66a14fc6e0cd',
   })
   @ApiOkResponse({
     description: TenantMessages.RETRIEVED,
     type: TenantResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid tenant identifier.',
+    description: TenantMessages.INVALID_ID,
   })
   @ApiNotFoundResponse({
     description: TenantMessages.NOT_FOUND,
   })
-  async findById(@Param('id') id: string): Promise<TenantResponseDto> {
+  async findById(
+    @Param('id') id: string,
+  ): Promise<TenantResponseDto> {
     return this.tenantService.findById(id);
   }
 
@@ -80,14 +103,91 @@ export class TenantController {
   @SuccessMessage(TenantMessages.LIST_RETRIEVED)
   @ApiOperation({
     summary: 'List Tenants',
-    description: 'Returns a paginated list of tenants.',
+    description:
+      'Returns a paginated list of tenants with search, sorting and status filtering.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    example: 'google',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    example: 'ACTIVE',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    example: 'createdAt',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    example: 'desc',
   })
   @ApiOkResponse({
     description: TenantMessages.LIST_RETRIEVED,
+    type: PageDto,
   })
   async findAll(
     @Query() pageOptions: PageOptionsDto,
   ): Promise<PageDto<TenantResponseDto>> {
-    return this.tenantService.findAll(pageOptions);
+    return this.tenantService.findAll(
+      pageOptions,
+    );
+  }
+
+  @Patch(':id')
+  @SuccessMessage(TenantMessages.UPDATED)
+  @ApiOperation({
+    summary: 'Update Tenant',
+    description:
+      'Updates an existing tenant. Only the fields provided in the request will be modified.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Tenant UUID',
+    example:
+      'df24b6f9-3768-4994-a41c-66a14fc6e0cd',
+  })
+  @ApiBody({
+    type: UpdateTenantDto,
+    description:
+      'Fields to update. All fields are optional.',
+  })
+  @ApiOkResponse({
+    description: TenantMessages.UPDATED,
+    type: TenantResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid tenant ID or invalid request payload.',
+  })
+  @ApiConflictResponse({
+    description:
+      'Tenant name, slug or contact email already exists.',
+  })
+  @ApiNotFoundResponse({
+    description: TenantMessages.NOT_FOUND,
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTenantDto,
+  ): Promise<TenantResponseDto> {
+    return this.tenantService.update(
+      id,
+      dto,
+    );
   }
 }
