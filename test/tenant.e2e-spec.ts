@@ -1,0 +1,223 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+
+import request from 'supertest';
+
+import { AppModule } from './../src/app.module';
+
+describe('Tenant API (e2e)', () => {
+  let app: INestApplication;
+
+  let tenantId: string;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
+
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  const unique = Date.now();
+
+  const tenant = {
+    name: `Netflix-${unique}`,
+    slug: `netflix-${unique}`,
+    contactEmail: `admin${unique}@netflix.com`,
+  };
+
+  describe('POST /tenants', () => {
+    it('should create tenant successfully', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/tenants')
+        .send(tenant)
+        .expect(201);
+
+      tenantId = response.body.data.id;
+
+      expect(response.body.success).toBe(true);
+
+      expect(response.body.message).toBe('Tenant created successfully.');
+
+      expect(response.body.data.name).toBe(tenant.name);
+    });
+
+    it('should reject duplicate slug', async () => {
+      await request(app.getHttpServer())
+        .post('/tenants')
+        .send({
+          name: 'Duplicate Name',
+          slug: tenant.slug,
+          contactEmail: 'duplicate@test.com',
+        })
+        .expect(409);
+    });
+
+    it('should reject invalid payload', async () => {
+      await request(app.getHttpServer())
+        .post('/tenants')
+        .send({
+          name: '',
+          slug: '',
+          contactEmail: 'invalid-email',
+        })
+        .expect(400);
+    });
+
+    it('should return standardized response', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/tenants')
+        .send({
+          name: `Microsoft-${unique}`,
+          slug: `microsoft-${unique}`,
+          contactEmail: `admin${unique}@microsoft.com`,
+        });
+
+      expect(response.body).toHaveProperty('success');
+
+      expect(response.body).toHaveProperty('message');
+
+      expect(response.body).toHaveProperty('data');
+
+      expect(response.body).toHaveProperty('timestamp');
+    });
+  });
+
+  describe('GET /tenants/:id', () => {
+    it('should return tenant by id', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/tenants/${tenantId}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+
+      expect(response.body.message).toBe('Tenant retrieved successfully.');
+
+      expect(response.body.data.id).toBe(tenantId);
+    });
+
+    it('should return 404 for unknown tenant', async () => {
+      await request(app.getHttpServer())
+        .get('/tenants/123e4567-e89b-42d3-a456-426614174000')
+        .expect(404);
+    });
+
+    it('should return 400 for invalid uuid', async () => {
+      await request(app.getHttpServer()).get('/tenants/abc').expect(400);
+    });
+
+    it('should return standardized response', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/tenants/${tenantId}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('success');
+
+      expect(response.body).toHaveProperty('message');
+
+      expect(response.body).toHaveProperty('data');
+
+      expect(response.body).toHaveProperty('timestamp');
+    });
+  });
+
+  describe('GET /tenants', () => {
+    it('should return paginated tenants', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/tenants')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+
+      expect(response.body.data).toHaveProperty('items');
+
+      expect(response.body.data).toHaveProperty('meta');
+    });
+
+    it('should search tenants', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/tenants')
+        .query({
+          search: 'netflix',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should filter ACTIVE tenants', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/tenants')
+        .query({
+          status: 'ACTIVE',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should filter SUSPENDED tenants', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/tenants')
+        .query({
+          status: 'SUSPENDED',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should combine search and status filter', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/tenants')
+        .query({
+          search: 'netflix',
+          status: 'ACTIVE',
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should reject invalid sort field', async () => {
+      await request(app.getHttpServer())
+        .get('/tenants')
+        .query({
+          sortBy: 'hack',
+        })
+        .expect(400);
+    });
+
+    it('should reject invalid page', async () => {
+      await request(app.getHttpServer())
+        .get('/tenants')
+        .query({
+          page: 0,
+        })
+        .expect(400);
+    });
+
+    it('should reject invalid limit', async () => {
+      await request(app.getHttpServer())
+        .get('/tenants')
+        .query({
+          limit: 0,
+        })
+        .expect(400);
+    });
+  });
+});
