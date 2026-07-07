@@ -190,4 +190,67 @@ export class TenantController {
       dto,
     );
   }
+  @Patch(':id/suspend')
+@SuccessMessage(
+  TenantMessages.SUSPENDED,
+)
+@ApiOperation({
+  summary: 'Suspend Tenant',
+  description:
+    'Suspends an existing tenant.',
+})
+@ApiParam({
+  name: 'id',
+  description: 'Tenant UUID',
+})
+@ApiOkResponse({
+  description:
+    TenantMessages.SUSPENDED,
+  type: TenantResponseDto,
+})
+@ApiBadRequestResponse({
+  description:
+    TenantMessages.ALREADY_SUSPENDED,
+})
+@ApiNotFoundResponse({
+  description:
+    TenantMessages.NOT_FOUND,
+})
+async suspend(
+  @Param('id') id: string,
+): Promise<TenantResponseDto> {
+  return this.tenantService.suspend(id);
+}
+
+@Patch(':id/activate')
+@SuccessMessage(
+  TenantMessages.ACTIVATED,
+)
+@ApiOperation({
+  summary: 'Activate Tenant',
+  description:
+    'Activates a suspended tenant.',
+})
+@ApiParam({
+  name: 'id',
+  description: 'Tenant UUID',
+})
+@ApiOkResponse({
+  description:
+    TenantMessages.ACTIVATED,
+  type: TenantResponseDto,
+})
+@ApiBadRequestResponse({
+  description:
+    TenantMessages.ALREADY_ACTIVE,
+})
+@ApiNotFoundResponse({
+  description:
+    TenantMessages.NOT_FOUND,
+})
+async activate(
+  @Param('id') id: string,
+): Promise<TenantResponseDto> {
+  return this.tenantService.activate(id);
+}
 }

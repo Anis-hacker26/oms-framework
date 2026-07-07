@@ -207,6 +207,98 @@ export class TenantService {
       updatedTenant,
     );
   }
+
+  async suspend(
+  id: string,
+): Promise<TenantResponseDto> {
+  this.validateTenantId(id);
+
+  const tenant =
+    await this.tenantRepository.findById(id);
+
+  if (!tenant) {
+    this.logger.warn(
+      'TenantService',
+      'tenant.not_found',
+      TenantMessages.NOT_FOUND,
+      {
+        tenantId: id,
+      },
+    );
+
+    throw new NotFoundException(
+      TenantMessages.NOT_FOUND,
+    );
+  }
+
+  if (tenant.isSuspended) {
+    throw new BadRequestException(
+      TenantMessages.ALREADY_SUSPENDED,
+    );
+  }
+
+  const suspendedTenant =
+    await this.tenantRepository.suspend(id);
+
+  this.logger.log(
+    'TenantService',
+    'tenant.suspended',
+    TenantMessages.SUSPENDED,
+    {
+      tenantId: suspendedTenant.id,
+    },
+  );
+
+  return TenantMapper.toResponseDto(
+    suspendedTenant,
+  );
+}
+
+async activate(
+  id: string,
+): Promise<TenantResponseDto> {
+  this.validateTenantId(id);
+
+  const tenant =
+    await this.tenantRepository.findById(id);
+
+  if (!tenant) {
+    this.logger.warn(
+      'TenantService',
+      'tenant.not_found',
+      TenantMessages.NOT_FOUND,
+      {
+        tenantId: id,
+      },
+    );
+
+    throw new NotFoundException(
+      TenantMessages.NOT_FOUND,
+    );
+  }
+
+  if (!tenant.isSuspended) {
+    throw new BadRequestException(
+      TenantMessages.ALREADY_ACTIVE,
+    );
+  }
+
+  const activatedTenant =
+    await this.tenantRepository.activate(id);
+
+  this.logger.log(
+    'TenantService',
+    'tenant.activated',
+    TenantMessages.ACTIVATED,
+    {
+      tenantId: activatedTenant.id,
+    },
+  );
+
+  return TenantMapper.toResponseDto(
+    activatedTenant,
+  );
+}
     private hasChanges(
     existingTenant: {
       name: string;

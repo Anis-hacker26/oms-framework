@@ -380,4 +380,83 @@ describe('Tenant API (e2e)', () => {
       .expect(409);
   });
 });
+describe('PATCH /tenants/:id/suspend', () => {
+  it('should suspend tenant successfully', async () => {
+    const response = await request(
+      app.getHttpServer(),
+    )
+      .patch(`/tenants/${tenantId}/suspend`)
+      .send({})
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+
+    expect(response.body.data.isSuspended).toBe(
+      true,
+    );
+  });
+
+  it('should reject already suspended tenant', async () => {
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}/suspend`)
+      .send({})
+      .expect(400);
+  });
+
+  it('should reject invalid uuid', async () => {
+    await request(app.getHttpServer())
+      .patch('/tenants/abc/suspend')
+      .send({})
+      .expect(400);
+  });
+
+  it('should return 404 for unknown tenant', async () => {
+    await request(app.getHttpServer())
+      .patch(
+        '/tenants/123e4567-e89b-42d3-a456-426614174000/suspend',
+      )
+      .send({})
+      .expect(404);
+  });
+});
+
+describe('PATCH /tenants/:id/activate', () => {
+  it('should activate tenant successfully', async () => {
+    const response = await request(
+      app.getHttpServer(),
+    )
+      .patch(`/tenants/${tenantId}/activate`)
+      .send({})
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+
+    expect(response.body.data.isSuspended).toBe(
+      false,
+    );
+  });
+
+  it('should reject already active tenant', async () => {
+    await request(app.getHttpServer())
+      .patch(`/tenants/${tenantId}/activate`)
+      .send({})
+      .expect(400);
+  });
+
+  it('should reject invalid uuid', async () => {
+    await request(app.getHttpServer())
+      .patch('/tenants/abc/activate')
+      .send({})
+      .expect(400);
+  });
+
+  it('should return 404 for unknown tenant', async () => {
+    await request(app.getHttpServer())
+      .patch(
+        '/tenants/123e4567-e89b-42d3-a456-426614174000/activate',
+      )
+      .send({})
+      .expect(404);
+  });
+});
 });

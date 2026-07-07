@@ -8,6 +8,12 @@ export const TenantMessages = {
 
   UPDATED: 'Tenant updated successfully.',
 
+  SUSPENDED:
+    'Tenant suspended successfully.',
+
+  ACTIVATED:
+    'Tenant activated successfully.',
+
   NO_CHANGES:
     'No changes were provided for update.',
 
@@ -20,10 +26,18 @@ export const TenantMessages = {
   DUPLICATE_EMAIL:
     'Tenant contact email already exists.',
 
-  NOT_FOUND: 'Tenant not found.',
+  NOT_FOUND:
+    'Tenant not found.',
 
-  INVALID_ID: 'Invalid tenant ID.',
+  INVALID_ID:
+    'Invalid tenant ID.',
 
   INVALID_SORT_FIELD:
     'Invalid sort field.',
+
+  ALREADY_SUSPENDED:
+    'Tenant is already suspended.',
+
+  ALREADY_ACTIVE:
+    'Tenant is already active.',
 } as const;

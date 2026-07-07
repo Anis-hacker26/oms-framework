@@ -18,6 +18,8 @@ describe('TenantService', () => {
 const mockTenantRepository = {
   create: jest.fn(),
   update: jest.fn(),
+  suspend: jest.fn(),
+  activate: jest.fn(),
   findById: jest.fn(),
   findAll: jest.fn(),
   findBySlug: jest.fn(),
@@ -87,7 +89,7 @@ const mockTenantRepository = {
       expect(result.name).toBe(dto.name);
       expect(result.slug).toBe(dto.slug);
       expect(result.contactEmail).toBe(dto.contactEmail);
-      expect(result.status).toBe('ACTIVE');
+      expect(result.isSuspended).toBe(false);
 
       expect(mockTenantRepository.findBySlug).toHaveBeenCalledWith(dto.slug);
 
@@ -821,4 +823,129 @@ it('should log tenant update successfully', async () => {
   );
 });
 
+describe('suspend()', () => {
+  const tenant = {
+    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+    name: 'Netflix',
+    slug: 'netflix',
+    contactEmail: 'admin@netflix.com',
+    isSuspended: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it('should suspend tenant successfully', async () => {
+    const suspendedTenant = {
+      ...tenant,
+      isSuspended: true,
+    };
+
+    mockTenantRepository.findById.mockResolvedValue(
+      tenant,
+    );
+
+    mockTenantRepository.suspend.mockResolvedValue(
+      suspendedTenant,
+    );
+
+    const result =
+      await service.suspend(tenant.id);
+
+    expect(result.isSuspended).toBe(true);
+
+    expect(
+      mockTenantRepository.suspend,
+    ).toHaveBeenCalledWith(tenant.id);
+  });
+
+  it('should throw NotFoundException', async () => {
+    mockTenantRepository.findById.mockResolvedValue(
+      null,
+    );
+
+    await expect(
+      service.suspend(tenant.id),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('should throw BadRequestException for already suspended tenant', async () => {
+    mockTenantRepository.findById.mockResolvedValue({
+      ...tenant,
+      isSuspended: true,
+    });
+
+    await expect(
+      service.suspend(tenant.id),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should throw BadRequestException for invalid uuid', async () => {
+    await expect(
+      service.suspend('abc'),
+    ).rejects.toThrow(BadRequestException);
+  });
+});
+
+describe('activate()', () => {
+  const tenant = {
+    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+    name: 'Netflix',
+    slug: 'netflix',
+    contactEmail: 'admin@netflix.com',
+    isSuspended: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it('should activate tenant successfully', async () => {
+    const activeTenant = {
+      ...tenant,
+      isSuspended: false,
+    };
+
+    mockTenantRepository.findById.mockResolvedValue(
+      tenant,
+    );
+
+    mockTenantRepository.activate.mockResolvedValue(
+      activeTenant,
+    );
+
+    const result =
+      await service.activate(tenant.id);
+
+    expect(result.isSuspended).toBe(false);
+
+    expect(
+      mockTenantRepository.activate,
+    ).toHaveBeenCalledWith(tenant.id);
+  });
+
+  it('should throw NotFoundException', async () => {
+    mockTenantRepository.findById.mockResolvedValue(
+      null,
+    );
+
+    await expect(
+      service.activate(tenant.id),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('should throw BadRequestException for already active tenant', async () => {
+    mockTenantRepository.findById.mockResolvedValue({
+      ...tenant,
+      isSuspended: false,
+    });
+
+    await expect(
+      service.activate(tenant.id),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should throw BadRequestException for invalid uuid', async () => {
+    await expect(
+      service.activate('abc'),
+    ).rejects.toThrow(BadRequestException);
+  });
+});
 });

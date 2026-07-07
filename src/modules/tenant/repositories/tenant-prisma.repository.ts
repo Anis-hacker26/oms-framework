@@ -140,5 +140,30 @@ export class TenantPrismaRepository extends TenantRepository {
       }),
     },
   });
+  }
+  async suspend(
+  id: string,
+): Promise<Tenant> {
+  return this.prisma.tenant.update({
+    where: {
+      id,
+    },
+    data: {
+      isSuspended: true,
+    },
+  });
+}
+
+async activate(
+  id: string,
+): Promise<Tenant> {
+  return this.prisma.tenant.update({
+    where: {
+      id,
+    },
+    data: {
+      isSuspended: false,
+    },
+  });
 }
 }

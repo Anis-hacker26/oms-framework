@@ -10,6 +10,19 @@ export abstract class TenantRepository {
     data: CreateTenantDto,
   ): Promise<Tenant>;
 
+  abstract update(
+    id: string,
+    data: UpdateTenantDto,
+  ): Promise<Tenant>;
+
+  abstract suspend(
+    id: string,
+  ): Promise<Tenant>;
+
+  abstract activate(
+    id: string,
+  ): Promise<Tenant>;
+
   abstract findById(
     id: string,
   ): Promise<Tenant | null>;
@@ -20,11 +33,6 @@ export abstract class TenantRepository {
     items: Tenant[];
     totalItems: number;
   }>;
-
-  abstract update(
-    id: string,
-    data: UpdateTenantDto,
-  ): Promise<Tenant>;
 
   abstract findBySlug(
     slug: string,
