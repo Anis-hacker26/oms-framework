@@ -28,8 +28,7 @@ export class UpdateTenantDto {
   @MinLength(3)
   @MaxLength(50)
   @Matches(/^[a-z0-9-]+$/, {
-    message:
-      'Slug may contain lowercase letters, numbers and hyphens only.',
+    message: 'Slug may contain lowercase letters, numbers and hyphens only.',
   })
   slug?: string;
 

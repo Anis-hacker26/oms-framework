@@ -15,17 +15,17 @@ import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto'
 describe('TenantService', () => {
   let service: TenantService;
 
-const mockTenantRepository = {
-  create: jest.fn(),
-  update: jest.fn(),
-  suspend: jest.fn(),
-  activate: jest.fn(),
-  findById: jest.fn(),
-  findAll: jest.fn(),
-  findBySlug: jest.fn(),
-  findByName: jest.fn(),
-  findByContactEmail: jest.fn(),
-};
+  const mockTenantRepository = {
+    create: jest.fn(),
+    update: jest.fn(),
+    suspend: jest.fn(),
+    activate: jest.fn(),
+    findById: jest.fn(),
+    findAll: jest.fn(),
+    findBySlug: jest.fn(),
+    findByName: jest.fn(),
+    findByContactEmail: jest.fn(),
+  };
 
   const mockLogger = {
     log: jest.fn(),
@@ -588,364 +588,312 @@ const mockTenantRepository = {
   });
 
   describe('update()', () => {
-  const existingTenant = {
-    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+    const existingTenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+      name: 'Netflix',
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-  it('should update tenant successfully', async () => {
-    const dto = {
-      name: 'Netflix India',
+    it('should update tenant successfully', async () => {
+      const dto = {
+        name: 'Netflix India',
+      };
+
+      const updatedTenant = {
+        ...existingTenant,
+        ...dto,
+      };
+
+      mockTenantRepository.findById.mockResolvedValue(existingTenant);
+
+      mockTenantRepository.findByName.mockResolvedValue(null);
+
+      mockTenantRepository.update.mockResolvedValue(updatedTenant);
+
+      const result = await service.update(existingTenant.id, dto);
+
+      expect(result.name).toBe(dto.name);
+
+      expect(mockTenantRepository.update).toHaveBeenCalledWith(
+        existingTenant.id,
+        dto,
+      );
+
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        'TenantService',
+        'tenant.updated',
+        'Tenant updated successfully.',
+        expect.any(Object),
+      );
+    });
+
+    it('should throw NotFoundException when tenant does not exist', async () => {
+      mockTenantRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.update(existingTenant.id, {
+          name: 'Google',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException for invalid uuid', async () => {
+      await expect(
+        service.update('abc', {
+          name: 'Google',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when no changes are provided', async () => {
+      mockTenantRepository.findById.mockResolvedValue(existingTenant);
+
+      await expect(service.update(existingTenant.id, {})).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(mockTenantRepository.update).not.toHaveBeenCalled();
+    });
+  });
+  it('should throw ConflictException for duplicate name during update', async () => {
+    const existingTenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+      name: 'Netflix',
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockTenantRepository.findById.mockResolvedValue(existingTenant);
+
+    mockTenantRepository.findByName.mockResolvedValue({
+      id: 'another-id',
+    });
+
+    await expect(
+      service.update(existingTenant.id, {
+        name: 'Google',
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(mockTenantRepository.update).not.toHaveBeenCalled();
+  });
+  it('should throw ConflictException for duplicate slug during update', async () => {
+    const existingTenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+      name: 'Netflix',
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockTenantRepository.findById.mockResolvedValue(existingTenant);
+
+    mockTenantRepository.findBySlug.mockResolvedValue({
+      id: 'another-id',
+    });
+
+    await expect(
+      service.update(existingTenant.id, {
+        slug: 'google',
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(mockTenantRepository.update).not.toHaveBeenCalled();
+  });
+  it('should throw ConflictException for duplicate contact email during update', async () => {
+    const existingTenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+      name: 'Netflix',
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockTenantRepository.findById.mockResolvedValue(existingTenant);
+
+    mockTenantRepository.findByContactEmail.mockResolvedValue({
+      id: 'another-id',
+    });
+
+    await expect(
+      service.update(existingTenant.id, {
+        contactEmail: 'admin@google.com',
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(mockTenantRepository.update).not.toHaveBeenCalled();
+  });
+  it('should skip uniqueness validation for unchanged values', async () => {
+    const existingTenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+      name: 'Netflix',
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockTenantRepository.findById.mockResolvedValue(existingTenant);
+
+    await expect(
+      service.update(existingTenant.id, {
+        name: 'Netflix',
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(mockTenantRepository.findByName).not.toHaveBeenCalled();
+  });
+  it('should log tenant update successfully', async () => {
+    const existingTenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+      name: 'Netflix',
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const updatedTenant = {
       ...existingTenant,
-      ...dto,
+      name: 'Netflix India',
     };
 
-    mockTenantRepository.findById.mockResolvedValue(
-      existingTenant,
-    );
+    mockTenantRepository.findById.mockResolvedValue(existingTenant);
 
-    mockTenantRepository.findByName.mockResolvedValue(
-      null,
-    );
+    mockTenantRepository.findByName.mockResolvedValue(null);
 
-    mockTenantRepository.update.mockResolvedValue(
-      updatedTenant,
-    );
+    mockTenantRepository.update.mockResolvedValue(updatedTenant);
 
-    const result = await service.update(
-      existingTenant.id,
-      dto,
-    );
-
-    expect(result.name).toBe(dto.name);
-
-    expect(
-      mockTenantRepository.update,
-    ).toHaveBeenCalledWith(
-      existingTenant.id,
-      dto,
-    );
+    await service.update(existingTenant.id, {
+      name: 'Netflix India',
+    });
 
     expect(mockLogger.log).toHaveBeenCalledWith(
       'TenantService',
       'tenant.updated',
       'Tenant updated successfully.',
-      expect.any(Object),
+      expect.objectContaining({
+        tenantId: existingTenant.id,
+      }),
     );
   });
 
-  it('should throw NotFoundException when tenant does not exist', async () => {
-    mockTenantRepository.findById.mockResolvedValue(
-      null,
-    );
-
-    await expect(
-      service.update(
-        existingTenant.id,
-        {
-          name: 'Google',
-        },
-      ),
-    ).rejects.toThrow(
-      NotFoundException,
-    );
-  });
-
-  it('should throw BadRequestException for invalid uuid', async () => {
-    await expect(
-      service.update(
-        'abc',
-        {
-          name: 'Google',
-        },
-      ),
-    ).rejects.toThrow(
-      BadRequestException,
-    );
-  });
-
-  it('should throw BadRequestException when no changes are provided', async () => {
-    mockTenantRepository.findById.mockResolvedValue(
-      existingTenant,
-    );
-
-    await expect(
-      service.update(
-        existingTenant.id,
-        {},
-      ),
-    ).rejects.toThrow(
-      BadRequestException,
-    );
-
-    expect(
-      mockTenantRepository.update,
-    ).not.toHaveBeenCalled();
-  });
-});
-it('should throw ConflictException for duplicate name during update', async () => {
-  const existingTenant = {
-    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  mockTenantRepository.findById.mockResolvedValue(existingTenant);
-
-  mockTenantRepository.findByName.mockResolvedValue({
-    id: 'another-id',
-  });
-
-  await expect(
-    service.update(existingTenant.id, {
-      name: 'Google',
-    }),
-  ).rejects.toThrow(ConflictException);
-
-  expect(mockTenantRepository.update).not.toHaveBeenCalled();
-});
-it('should throw ConflictException for duplicate slug during update', async () => {
-  const existingTenant = {
-  id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  mockTenantRepository.findById.mockResolvedValue(existingTenant);
-
-  mockTenantRepository.findBySlug.mockResolvedValue({
-    id: 'another-id',
-  });
-
-  await expect(
-    service.update(existingTenant.id, {
-      slug: 'google',
-    }),
-  ).rejects.toThrow(ConflictException);
-
-  expect(mockTenantRepository.update).not.toHaveBeenCalled();
-});
-it('should throw ConflictException for duplicate contact email during update', async () => {
-  const existingTenant = {
-    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  mockTenantRepository.findById.mockResolvedValue(existingTenant);
-
-  mockTenantRepository.findByContactEmail.mockResolvedValue({
-    id: 'another-id',
-  });
-
-  await expect(
-    service.update(existingTenant.id, {
-      contactEmail: 'admin@google.com',
-    }),
-  ).rejects.toThrow(ConflictException);
-
-  expect(mockTenantRepository.update).not.toHaveBeenCalled();
-});
-it('should skip uniqueness validation for unchanged values', async () => {
-  const existingTenant = {
-    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  mockTenantRepository.findById.mockResolvedValue(existingTenant);
-
-  await expect(
-    service.update(existingTenant.id, {
+  describe('suspend()', () => {
+    const tenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
       name: 'Netflix',
-    }),
-  ).rejects.toThrow(BadRequestException);
-
-  expect(mockTenantRepository.findByName).not.toHaveBeenCalled();
-});
-it('should log tenant update successfully', async () => {
-  const existingTenant = {
-    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const updatedTenant = {
-    ...existingTenant,
-    name: 'Netflix India',
-  };
-
-  mockTenantRepository.findById.mockResolvedValue(existingTenant);
-
-  mockTenantRepository.findByName.mockResolvedValue(null);
-
-  mockTenantRepository.update.mockResolvedValue(updatedTenant);
-
-  await service.update(existingTenant.id, {
-    name: 'Netflix India',
-  });
-
-  expect(mockLogger.log).toHaveBeenCalledWith(
-    'TenantService',
-    'tenant.updated',
-    'Tenant updated successfully.',
-    expect.objectContaining({
-      tenantId: existingTenant.id,
-    }),
-  );
-});
-
-describe('suspend()', () => {
-  const tenant = {
-    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  it('should suspend tenant successfully', async () => {
-    const suspendedTenant = {
-      ...tenant,
-      isSuspended: true,
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    mockTenantRepository.findById.mockResolvedValue(
-      tenant,
-    );
+    it('should suspend tenant successfully', async () => {
+      const suspendedTenant = {
+        ...tenant,
+        isSuspended: true,
+      };
 
-    mockTenantRepository.suspend.mockResolvedValue(
-      suspendedTenant,
-    );
+      mockTenantRepository.findById.mockResolvedValue(tenant);
 
-    const result =
-      await service.suspend(tenant.id);
+      mockTenantRepository.suspend.mockResolvedValue(suspendedTenant);
 
-    expect(result.isSuspended).toBe(true);
+      const result = await service.suspend(tenant.id);
 
-    expect(
-      mockTenantRepository.suspend,
-    ).toHaveBeenCalledWith(tenant.id);
-  });
+      expect(result.isSuspended).toBe(true);
 
-  it('should throw NotFoundException', async () => {
-    mockTenantRepository.findById.mockResolvedValue(
-      null,
-    );
-
-    await expect(
-      service.suspend(tenant.id),
-    ).rejects.toThrow(NotFoundException);
-  });
-
-  it('should throw BadRequestException for already suspended tenant', async () => {
-    mockTenantRepository.findById.mockResolvedValue({
-      ...tenant,
-      isSuspended: true,
+      expect(mockTenantRepository.suspend).toHaveBeenCalledWith(tenant.id);
     });
 
-    await expect(
-      service.suspend(tenant.id),
-    ).rejects.toThrow(BadRequestException);
+    it('should throw NotFoundException', async () => {
+      mockTenantRepository.findById.mockResolvedValue(null);
+
+      await expect(service.suspend(tenant.id)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw BadRequestException for already suspended tenant', async () => {
+      mockTenantRepository.findById.mockResolvedValue({
+        ...tenant,
+        isSuspended: true,
+      });
+
+      await expect(service.suspend(tenant.id)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for invalid uuid', async () => {
+      await expect(service.suspend('abc')).rejects.toThrow(BadRequestException);
+    });
   });
 
-  it('should throw BadRequestException for invalid uuid', async () => {
-    await expect(
-      service.suspend('abc'),
-    ).rejects.toThrow(BadRequestException);
-  });
-});
-
-describe('activate()', () => {
-  const tenant = {
-    id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
-    name: 'Netflix',
-    slug: 'netflix',
-    contactEmail: 'admin@netflix.com',
-    isSuspended: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  it('should activate tenant successfully', async () => {
-    const activeTenant = {
-      ...tenant,
-      isSuspended: false,
+  describe('activate()', () => {
+    const tenant = {
+      id: '967d397e-fe36-4d3b-9799-a11ec58c6e9d',
+      name: 'Netflix',
+      slug: 'netflix',
+      contactEmail: 'admin@netflix.com',
+      isSuspended: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    mockTenantRepository.findById.mockResolvedValue(
-      tenant,
-    );
+    it('should activate tenant successfully', async () => {
+      const activeTenant = {
+        ...tenant,
+        isSuspended: false,
+      };
 
-    mockTenantRepository.activate.mockResolvedValue(
-      activeTenant,
-    );
+      mockTenantRepository.findById.mockResolvedValue(tenant);
 
-    const result =
-      await service.activate(tenant.id);
+      mockTenantRepository.activate.mockResolvedValue(activeTenant);
 
-    expect(result.isSuspended).toBe(false);
+      const result = await service.activate(tenant.id);
 
-    expect(
-      mockTenantRepository.activate,
-    ).toHaveBeenCalledWith(tenant.id);
-  });
+      expect(result.isSuspended).toBe(false);
 
-  it('should throw NotFoundException', async () => {
-    mockTenantRepository.findById.mockResolvedValue(
-      null,
-    );
-
-    await expect(
-      service.activate(tenant.id),
-    ).rejects.toThrow(NotFoundException);
-  });
-
-  it('should throw BadRequestException for already active tenant', async () => {
-    mockTenantRepository.findById.mockResolvedValue({
-      ...tenant,
-      isSuspended: false,
+      expect(mockTenantRepository.activate).toHaveBeenCalledWith(tenant.id);
     });
 
-    await expect(
-      service.activate(tenant.id),
-    ).rejects.toThrow(BadRequestException);
-  });
+    it('should throw NotFoundException', async () => {
+      mockTenantRepository.findById.mockResolvedValue(null);
 
-  it('should throw BadRequestException for invalid uuid', async () => {
-    await expect(
-      service.activate('abc'),
-    ).rejects.toThrow(BadRequestException);
+      await expect(service.activate(tenant.id)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw BadRequestException for already active tenant', async () => {
+      mockTenantRepository.findById.mockResolvedValue({
+        ...tenant,
+        isSuspended: false,
+      });
+
+      await expect(service.activate(tenant.id)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for invalid uuid', async () => {
+      await expect(service.activate('abc')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
   });
-});
 });

@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 model Tenant {
   // =====================================================
   // Primary Key
@@ -18,9 +23,9 @@ model Tenant {
   // Basic Information
   // =====================================================
 
-  name         String @unique
-  slug         String @unique
+  name         String
   contactEmail String @unique
+  slug         String @unique
 
   // =====================================================
   // Status
@@ -50,4 +55,113 @@ model Tenant {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Users     User[]
+
+  @@index([name])
+  @@index([contactEmail])
+}
+
+model User {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // Tenant Relationship
+  // =====================================================
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  // =====================================================
+  // Authentication
+  // =====================================================
+
+  email String @unique
+
+  passwordHash String
+
+  // =====================================================
+  // Profile
+  // =====================================================
+
+  firstName String
+
+  lastName String?
+
+  // =====================================================
+  // Status
+  // =====================================================
+
+  status UserStatus @default(ACTIVE)
+
+  // =====================================================
+  // Soft Delete
+  // =====================================================
+
+  deletedAt DateTime?
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  // =====================================================
+  // Indexes
+  // =====================================================
+  refreshTokens UserRefreshToken[]
+
+  @@index([tenantId])
+  @@index([email])
+}
+
+model UserRefreshToken {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // User Relationship
+  // =====================================================
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // =====================================================
+  // Token
+  // =====================================================
+
+  tokenHash String
+
+  // =====================================================
+  // Session Information
+  // =====================================================
+
+  expiresAt DateTime
+
+  revokedAt DateTime?
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  // =====================================================
+  // Indexes
+  // =====================================================
+
+  @@index([userId])
+  @@index([expiresAt])
 }

@@ -37,16 +37,13 @@ import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto'
 @ApiTags('Tenant')
 @Controller('tenants')
 export class TenantController {
-  constructor(
-    private readonly tenantService: TenantService,
-  ) {}
+  constructor(private readonly tenantService: TenantService) {}
 
   @Post()
   @SuccessMessage(TenantMessages.CREATED)
   @ApiOperation({
     summary: 'Create Tenant',
-    description:
-      'Creates a new tenant in the OMS Framework.',
+    description: 'Creates a new tenant in the OMS Framework.',
   })
   @ApiBody({
     type: CreateTenantDto,
@@ -57,16 +54,12 @@ export class TenantController {
     type: TenantResponseDto,
   })
   @ApiBadRequestResponse({
-    description:
-      'Validation failed. One or more request fields are invalid.',
+    description: 'Validation failed. One or more request fields are invalid.',
   })
   @ApiConflictResponse({
-    description:
-      'Tenant name, slug or contact email already exists.',
+    description: 'Tenant name, slug or contact email already exists.',
   })
-  async create(
-    @Body() dto: CreateTenantDto,
-  ): Promise<TenantResponseDto> {
+  async create(@Body() dto: CreateTenantDto): Promise<TenantResponseDto> {
     return this.tenantService.create(dto);
   }
 
@@ -74,14 +67,12 @@ export class TenantController {
   @SuccessMessage(TenantMessages.RETRIEVED)
   @ApiOperation({
     summary: 'Get Tenant by ID',
-    description:
-      'Retrieves a tenant using its unique identifier.',
+    description: 'Retrieves a tenant using its unique identifier.',
   })
   @ApiParam({
     name: 'id',
     description: 'Tenant UUID',
-    example:
-      'df24b6f9-3768-4994-a41c-66a14fc6e0cd',
+    example: 'df24b6f9-3768-4994-a41c-66a14fc6e0cd',
   })
   @ApiOkResponse({
     description: TenantMessages.RETRIEVED,
@@ -93,9 +84,7 @@ export class TenantController {
   @ApiNotFoundResponse({
     description: TenantMessages.NOT_FOUND,
   })
-  async findById(
-    @Param('id') id: string,
-  ): Promise<TenantResponseDto> {
+  async findById(@Param('id') id: string): Promise<TenantResponseDto> {
     return this.tenantService.findById(id);
   }
 
@@ -143,9 +132,7 @@ export class TenantController {
   async findAll(
     @Query() pageOptions: PageOptionsDto,
   ): Promise<PageDto<TenantResponseDto>> {
-    return this.tenantService.findAll(
-      pageOptions,
-    );
+    return this.tenantService.findAll(pageOptions);
   }
 
   @Patch(':id')
@@ -158,25 +145,21 @@ export class TenantController {
   @ApiParam({
     name: 'id',
     description: 'Tenant UUID',
-    example:
-      'df24b6f9-3768-4994-a41c-66a14fc6e0cd',
+    example: 'df24b6f9-3768-4994-a41c-66a14fc6e0cd',
   })
   @ApiBody({
     type: UpdateTenantDto,
-    description:
-      'Fields to update. All fields are optional.',
+    description: 'Fields to update. All fields are optional.',
   })
   @ApiOkResponse({
     description: TenantMessages.UPDATED,
     type: TenantResponseDto,
   })
   @ApiBadRequestResponse({
-    description:
-      'Invalid tenant ID or invalid request payload.',
+    description: 'Invalid tenant ID or invalid request payload.',
   })
   @ApiConflictResponse({
-    description:
-      'Tenant name, slug or contact email already exists.',
+    description: 'Tenant name, slug or contact email already exists.',
   })
   @ApiNotFoundResponse({
     description: TenantMessages.NOT_FOUND,
@@ -185,72 +168,53 @@ export class TenantController {
     @Param('id') id: string,
     @Body() dto: UpdateTenantDto,
   ): Promise<TenantResponseDto> {
-    return this.tenantService.update(
-      id,
-      dto,
-    );
+    return this.tenantService.update(id, dto);
   }
   @Patch(':id/suspend')
-@SuccessMessage(
-  TenantMessages.SUSPENDED,
-)
-@ApiOperation({
-  summary: 'Suspend Tenant',
-  description:
-    'Suspends an existing tenant.',
-})
-@ApiParam({
-  name: 'id',
-  description: 'Tenant UUID',
-})
-@ApiOkResponse({
-  description:
-    TenantMessages.SUSPENDED,
-  type: TenantResponseDto,
-})
-@ApiBadRequestResponse({
-  description:
-    TenantMessages.ALREADY_SUSPENDED,
-})
-@ApiNotFoundResponse({
-  description:
-    TenantMessages.NOT_FOUND,
-})
-async suspend(
-  @Param('id') id: string,
-): Promise<TenantResponseDto> {
-  return this.tenantService.suspend(id);
-}
+  @SuccessMessage(TenantMessages.SUSPENDED)
+  @ApiOperation({
+    summary: 'Suspend Tenant',
+    description: 'Suspends an existing tenant.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Tenant UUID',
+  })
+  @ApiOkResponse({
+    description: TenantMessages.SUSPENDED,
+    type: TenantResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: TenantMessages.ALREADY_SUSPENDED,
+  })
+  @ApiNotFoundResponse({
+    description: TenantMessages.NOT_FOUND,
+  })
+  async suspend(@Param('id') id: string): Promise<TenantResponseDto> {
+    return this.tenantService.suspend(id);
+  }
 
-@Patch(':id/activate')
-@SuccessMessage(
-  TenantMessages.ACTIVATED,
-)
-@ApiOperation({
-  summary: 'Activate Tenant',
-  description:
-    'Activates a suspended tenant.',
-})
-@ApiParam({
-  name: 'id',
-  description: 'Tenant UUID',
-})
-@ApiOkResponse({
-  description:
-    TenantMessages.ACTIVATED,
-  type: TenantResponseDto,
-})
-@ApiBadRequestResponse({
-  description:
-    TenantMessages.ALREADY_ACTIVE,
-})
-@ApiNotFoundResponse({
-  description:
-    TenantMessages.NOT_FOUND,
-})
-async activate(
-  @Param('id') id: string,
-): Promise<TenantResponseDto> {
-  return this.tenantService.activate(id);
-}
+  @Patch(':id/activate')
+  @SuccessMessage(TenantMessages.ACTIVATED)
+  @ApiOperation({
+    summary: 'Activate Tenant',
+    description: 'Activates a suspended tenant.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Tenant UUID',
+  })
+  @ApiOkResponse({
+    description: TenantMessages.ACTIVATED,
+    type: TenantResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: TenantMessages.ALREADY_ACTIVE,
+  })
+  @ApiNotFoundResponse({
+    description: TenantMessages.NOT_FOUND,
+  })
+  async activate(@Param('id') id: string): Promise<TenantResponseDto> {
+    return this.tenantService.activate(id);
+  }
 }

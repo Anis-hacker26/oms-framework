@@ -32,41 +32,28 @@ export class TenantService {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async create(
-    dto: CreateTenantDto,
-  ): Promise<TenantResponseDto> {
+  async create(dto: CreateTenantDto): Promise<TenantResponseDto> {
     await this.validateUniqueSlug(dto.slug);
 
     await this.validateUniqueName(dto.name);
 
-    await this.validateUniqueContactEmail(
-      dto.contactEmail,
-    );
+    await this.validateUniqueContactEmail(dto.contactEmail);
 
-    const tenant =
-      await this.tenantRepository.create(dto);
+    const tenant = await this.tenantRepository.create(dto);
 
-    this.logger.log(
-      'TenantService',
-      'tenant.created',
-      TenantMessages.CREATED,
-      {
-        tenantId: tenant.id,
-        tenantName: tenant.name,
-        tenantSlug: tenant.slug,
-      },
-    );
+    this.logger.log('TenantService', 'tenant.created', TenantMessages.CREATED, {
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      tenantSlug: tenant.slug,
+    });
 
     return TenantMapper.toResponseDto(tenant);
   }
 
-  async findById(
-    id: string,
-  ): Promise<TenantResponseDto> {
+  async findById(id: string): Promise<TenantResponseDto> {
     this.validateTenantId(id);
 
-    const tenant =
-      await this.tenantRepository.findById(id);
+    const tenant = await this.tenantRepository.findById(id);
 
     if (!tenant) {
       this.logger.warn(
@@ -78,19 +65,12 @@ export class TenantService {
         },
       );
 
-      throw new NotFoundException(
-        TenantMessages.NOT_FOUND,
-      );
+      throw new NotFoundException(TenantMessages.NOT_FOUND);
     }
 
-    this.logger.log(
-      'TenantService',
-      'tenant.found',
-      TenantMessages.RETRIEVED,
-      {
-        tenantId: tenant.id,
-      },
-    );
+    this.logger.log('TenantService', 'tenant.found', TenantMessages.RETRIEVED, {
+      tenantId: tenant.id,
+    });
 
     return TenantMapper.toResponseDto(tenant);
   }
@@ -104,14 +84,10 @@ export class TenantService {
       'Tenant list requested.',
     );
 
-    this.validateSortField(
-      pageOptions.sortBy,
-    );
+    this.validateSortField(pageOptions.sortBy);
 
     const { items, totalItems } =
-      await this.tenantRepository.findAll(
-        pageOptions,
-      );
+      await this.tenantRepository.findAll(pageOptions);
 
     const tenantDtos = items.map((tenant) =>
       TenantMapper.toResponseDto(tenant),
@@ -123,20 +99,13 @@ export class TenantService {
       totalItems,
     );
 
-    return new PageDto(
-      tenantDtos,
-      meta,
-    );
+    return new PageDto(tenantDtos, meta);
   }
 
-  async update(
-    id: string,
-    dto: UpdateTenantDto,
-  ): Promise<TenantResponseDto> {
+  async update(id: string, dto: UpdateTenantDto): Promise<TenantResponseDto> {
     this.validateTenantId(id);
 
-    const existingTenant =
-      await this.tenantRepository.findById(id);
+    const existingTenant = await this.tenantRepository.findById(id);
 
     if (!existingTenant) {
       this.logger.warn(
@@ -148,158 +117,110 @@ export class TenantService {
         },
       );
 
-      throw new NotFoundException(
-        TenantMessages.NOT_FOUND,
-      );
+      throw new NotFoundException(TenantMessages.NOT_FOUND);
     }
 
     if (!this.hasChanges(existingTenant, dto)) {
-      throw new BadRequestException(
-        TenantMessages.NO_CHANGES,
-      );
+      throw new BadRequestException(TenantMessages.NO_CHANGES);
     }
 
-    if (
-      dto.name !== undefined &&
-      dto.name !== existingTenant.name
-    ) {
-      await this.validateUniqueName(
-        dto.name,
-      );
+    if (dto.name !== undefined && dto.name !== existingTenant.name) {
+      await this.validateUniqueName(dto.name);
     }
 
-    if (
-      dto.slug !== undefined &&
-      dto.slug !== existingTenant.slug
-    ) {
-      await this.validateUniqueSlug(
-        dto.slug,
-      );
+    if (dto.slug !== undefined && dto.slug !== existingTenant.slug) {
+      await this.validateUniqueSlug(dto.slug);
     }
 
     if (
       dto.contactEmail !== undefined &&
-      dto.contactEmail !==
-        existingTenant.contactEmail
+      dto.contactEmail !== existingTenant.contactEmail
     ) {
-      await this.validateUniqueContactEmail(
-        dto.contactEmail,
-      );
+      await this.validateUniqueContactEmail(dto.contactEmail);
     }
 
-    const updatedTenant =
-      await this.tenantRepository.update(
-        id,
-        dto,
+    const updatedTenant = await this.tenantRepository.update(id, dto);
+
+    this.logger.log('TenantService', 'tenant.updated', TenantMessages.UPDATED, {
+      tenantId: updatedTenant.id,
+      updatedFields: Object.keys(dto),
+    });
+
+    return TenantMapper.toResponseDto(updatedTenant);
+  }
+
+  async suspend(id: string): Promise<TenantResponseDto> {
+    this.validateTenantId(id);
+
+    const tenant = await this.tenantRepository.findById(id);
+
+    if (!tenant) {
+      this.logger.warn(
+        'TenantService',
+        'tenant.not_found',
+        TenantMessages.NOT_FOUND,
+        {
+          tenantId: id,
+        },
       );
+
+      throw new NotFoundException(TenantMessages.NOT_FOUND);
+    }
+
+    if (tenant.isSuspended) {
+      throw new BadRequestException(TenantMessages.ALREADY_SUSPENDED);
+    }
+
+    const suspendedTenant = await this.tenantRepository.suspend(id);
 
     this.logger.log(
       'TenantService',
-      'tenant.updated',
-      TenantMessages.UPDATED,
+      'tenant.suspended',
+      TenantMessages.SUSPENDED,
       {
-        tenantId: updatedTenant.id,
-        updatedFields: Object.keys(dto),
+        tenantId: suspendedTenant.id,
       },
     );
 
-    return TenantMapper.toResponseDto(
-      updatedTenant,
-    );
+    return TenantMapper.toResponseDto(suspendedTenant);
   }
 
-  async suspend(
-  id: string,
-): Promise<TenantResponseDto> {
-  this.validateTenantId(id);
+  async activate(id: string): Promise<TenantResponseDto> {
+    this.validateTenantId(id);
 
-  const tenant =
-    await this.tenantRepository.findById(id);
+    const tenant = await this.tenantRepository.findById(id);
 
-  if (!tenant) {
-    this.logger.warn(
+    if (!tenant) {
+      this.logger.warn(
+        'TenantService',
+        'tenant.not_found',
+        TenantMessages.NOT_FOUND,
+        {
+          tenantId: id,
+        },
+      );
+
+      throw new NotFoundException(TenantMessages.NOT_FOUND);
+    }
+
+    if (!tenant.isSuspended) {
+      throw new BadRequestException(TenantMessages.ALREADY_ACTIVE);
+    }
+
+    const activatedTenant = await this.tenantRepository.activate(id);
+
+    this.logger.log(
       'TenantService',
-      'tenant.not_found',
-      TenantMessages.NOT_FOUND,
+      'tenant.activated',
+      TenantMessages.ACTIVATED,
       {
-        tenantId: id,
+        tenantId: activatedTenant.id,
       },
     );
 
-    throw new NotFoundException(
-      TenantMessages.NOT_FOUND,
-    );
+    return TenantMapper.toResponseDto(activatedTenant);
   }
-
-  if (tenant.isSuspended) {
-    throw new BadRequestException(
-      TenantMessages.ALREADY_SUSPENDED,
-    );
-  }
-
-  const suspendedTenant =
-    await this.tenantRepository.suspend(id);
-
-  this.logger.log(
-    'TenantService',
-    'tenant.suspended',
-    TenantMessages.SUSPENDED,
-    {
-      tenantId: suspendedTenant.id,
-    },
-  );
-
-  return TenantMapper.toResponseDto(
-    suspendedTenant,
-  );
-}
-
-async activate(
-  id: string,
-): Promise<TenantResponseDto> {
-  this.validateTenantId(id);
-
-  const tenant =
-    await this.tenantRepository.findById(id);
-
-  if (!tenant) {
-    this.logger.warn(
-      'TenantService',
-      'tenant.not_found',
-      TenantMessages.NOT_FOUND,
-      {
-        tenantId: id,
-      },
-    );
-
-    throw new NotFoundException(
-      TenantMessages.NOT_FOUND,
-    );
-  }
-
-  if (!tenant.isSuspended) {
-    throw new BadRequestException(
-      TenantMessages.ALREADY_ACTIVE,
-    );
-  }
-
-  const activatedTenant =
-    await this.tenantRepository.activate(id);
-
-  this.logger.log(
-    'TenantService',
-    'tenant.activated',
-    TenantMessages.ACTIVATED,
-    {
-      tenantId: activatedTenant.id,
-    },
-  );
-
-  return TenantMapper.toResponseDto(
-    activatedTenant,
-  );
-}
-    private hasChanges(
+  private hasChanges(
     existingTenant: {
       name: string;
       slug: string;
@@ -308,50 +229,34 @@ async activate(
     dto: UpdateTenantDto,
   ): boolean {
     return (
-      (dto.name !== undefined &&
-        dto.name !== existingTenant.name) ||
-      (dto.slug !== undefined &&
-        dto.slug !== existingTenant.slug) ||
+      (dto.name !== undefined && dto.name !== existingTenant.name) ||
+      (dto.slug !== undefined && dto.slug !== existingTenant.slug) ||
       (dto.contactEmail !== undefined &&
-        dto.contactEmail !==
-          existingTenant.contactEmail)
+        dto.contactEmail !== existingTenant.contactEmail)
     );
   }
 
-  private validateTenantId(
-    id: string,
-  ): void {
+  private validateTenantId(id: string): void {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
     if (!uuidRegex.test(id)) {
-      throw new BadRequestException(
-        TenantMessages.INVALID_ID,
-      );
+      throw new BadRequestException(TenantMessages.INVALID_ID);
     }
   }
 
-  private validateSortField(
-    sortBy: string,
-  ): void {
+  private validateSortField(sortBy: string): void {
     if (
       !TENANT_SORTABLE_FIELDS.includes(
         sortBy as (typeof TENANT_SORTABLE_FIELDS)[number],
       )
     ) {
-      throw new BadRequestException(
-        TenantMessages.INVALID_SORT_FIELD,
-      );
+      throw new BadRequestException(TenantMessages.INVALID_SORT_FIELD);
     }
   }
 
-  private async validateUniqueSlug(
-    slug: string,
-  ): Promise<void> {
-    const existingSlug =
-      await this.tenantRepository.findBySlug(
-        slug,
-      );
+  private async validateUniqueSlug(slug: string): Promise<void> {
+    const existingSlug = await this.tenantRepository.findBySlug(slug);
 
     if (existingSlug) {
       this.logger.warn(
@@ -363,19 +268,12 @@ async activate(
         },
       );
 
-      throw new ConflictException(
-        TenantMessages.DUPLICATE_SLUG,
-      );
+      throw new ConflictException(TenantMessages.DUPLICATE_SLUG);
     }
   }
 
-  private async validateUniqueName(
-    name: string,
-  ): Promise<void> {
-    const existingName =
-      await this.tenantRepository.findByName(
-        name,
-      );
+  private async validateUniqueName(name: string): Promise<void> {
+    const existingName = await this.tenantRepository.findByName(name);
 
     if (existingName) {
       this.logger.warn(
@@ -387,19 +285,12 @@ async activate(
         },
       );
 
-      throw new ConflictException(
-        TenantMessages.DUPLICATE_NAME,
-      );
+      throw new ConflictException(TenantMessages.DUPLICATE_NAME);
     }
   }
 
-  private async validateUniqueContactEmail(
-    email: string,
-  ): Promise<void> {
-    const existingEmail =
-      await this.tenantRepository.findByContactEmail(
-        email,
-      );
+  private async validateUniqueContactEmail(email: string): Promise<void> {
+    const existingEmail = await this.tenantRepository.findByContactEmail(email);
 
     if (existingEmail) {
       this.logger.warn(
@@ -411,9 +302,7 @@ async activate(
         },
       );
 
-      throw new ConflictException(
-        TenantMessages.DUPLICATE_EMAIL,
-      );
+      throw new ConflictException(TenantMessages.DUPLICATE_EMAIL);
     }
   }
 }

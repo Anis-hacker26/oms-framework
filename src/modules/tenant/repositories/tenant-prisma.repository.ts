@@ -64,7 +64,6 @@ export class TenantPrismaRepository extends TenantRepository {
         },
       ];
     }
-    
 
     if (pageOptions.status === TenantStatus.ACTIVE) {
       where.isSuspended = false;
@@ -104,7 +103,7 @@ export class TenantPrismaRepository extends TenantRepository {
   }
 
   async findByName(name: string): Promise<Tenant | null> {
-    return this.prisma.tenant.findUnique({
+    return this.prisma.tenant.findFirst({
       where: {
         name,
       },
@@ -118,52 +117,43 @@ export class TenantPrismaRepository extends TenantRepository {
       },
     });
   }
-  async update(
-  id: string,
-  data: UpdateTenantDto,
-): Promise<Tenant> {
-  return this.prisma.tenant.update({
-    where: {
-      id,
-    },
-    data: {
-      ...(data.name !== undefined && {
-        name: data.name,
-      }),
-      ...(data.slug !== undefined && {
-        slug: data.slug,
-      }),
-      ...(data.contactEmail !==
-        undefined && {
-        contactEmail:
-          data.contactEmail,
-      }),
-    },
-  });
+  async update(id: string, data: UpdateTenantDto): Promise<Tenant> {
+    return this.prisma.tenant.update({
+      where: {
+        id,
+      },
+      data: {
+        ...(data.name !== undefined && {
+          name: data.name,
+        }),
+        ...(data.slug !== undefined && {
+          slug: data.slug,
+        }),
+        ...(data.contactEmail !== undefined && {
+          contactEmail: data.contactEmail,
+        }),
+      },
+    });
   }
-  async suspend(
-  id: string,
-): Promise<Tenant> {
-  return this.prisma.tenant.update({
-    where: {
-      id,
-    },
-    data: {
-      isSuspended: true,
-    },
-  });
-}
+  async suspend(id: string): Promise<Tenant> {
+    return this.prisma.tenant.update({
+      where: {
+        id,
+      },
+      data: {
+        isSuspended: true,
+      },
+    });
+  }
 
-async activate(
-  id: string,
-): Promise<Tenant> {
-  return this.prisma.tenant.update({
-    where: {
-      id,
-    },
-    data: {
-      isSuspended: false,
-    },
-  });
-}
+  async activate(id: string): Promise<Tenant> {
+    return this.prisma.tenant.update({
+      where: {
+        id,
+      },
+      data: {
+        isSuspended: false,
+      },
+    });
+  }
 }
