@@ -7,6 +7,8 @@ import { PrismaModule } from '../../database/prisma/prisma.module';
 
 import { AuthController } from './controllers/auth.controller';
 
+import { JwtStrategy } from './strategies/jwt.strategy';
+
 import { AuthService } from './services/auth.service';
 import { TokenService } from './services/token.service';
 
@@ -38,20 +40,21 @@ import { PrismaRefreshTokenRepository } from './repositories/prisma-refresh-toke
     AuthController,
   ],
 
-  providers: [
-    AuthService,
-    TokenService,
+ providers: [
+  AuthService,
+  TokenService,
+  JwtStrategy,
 
-    {
-      provide: UserRepository,
-      useClass: PrismaUserRepository,
-    },
+  {
+    provide: UserRepository,
+    useClass: PrismaUserRepository,
+  },
 
-    {
-      provide: RefreshTokenRepository,
-      useClass: PrismaRefreshTokenRepository,
-    },
-  ],
+  {
+    provide: RefreshTokenRepository,
+    useClass: PrismaRefreshTokenRepository,
+  },
+],
 
   exports: [
     AuthService,

@@ -6,6 +6,10 @@ import {
 import { randomUUID } from 'crypto';
 import { LoginDto } from '../dto/login.dto';
 import { LoginResponseDto } from '../dto/login-response.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { LogoutDto } from '../dto/logout.dto';
+import { LogoutResponseDto } from '../dto/logout-response.dto';
+import { LogoutAllResponseDto } from '../dto/logout-all-response.dto';
 
 import { AccessTokenPayload } from '../interfaces/access-token-payload.interface';
 import { AuthUser } from '../interfaces/auth-user.interface';
@@ -65,18 +69,10 @@ const tokens = await this.generateTokenPair(
   sessionId,
 );
 
-const refreshTokenHash = await PasswordUtil.hash(
-  tokens.refreshToken,
-);
-
-const refreshTokenExpiresAt =
-  this.tokenService.getRefreshTokenExpiryDate();
-
-await this.refreshTokenRepository.create(
+await this.createRefreshTokenSession(
   sessionId,
   user.id,
-  refreshTokenHash,
-  refreshTokenExpiresAt,
+  tokens.refreshToken,
 );
 
 await this.userRepository.updateLastLogin(user.id);
@@ -84,14 +80,154 @@ await this.userRepository.updateLastLogin(user.id);
 return tokens;
 }
 
-  async refresh(): Promise<void> {
-    throw new Error('Not implemented.');
+async refresh(
+  refreshTokenDto: RefreshTokenDto,
+): Promise<LoginResponseDto> {
+  const payload =
+    await this.tokenService.verifyRefreshToken(
+      refreshTokenDto.refreshToken,
+    );
+
+  const storedToken =
+    await this.refreshTokenRepository.findById(
+      payload.sessionId,
+    );
+
+  if (!storedToken) {
+    throw new UnauthorizedException(
+      'Invalid refresh token.',
+    );
   }
 
-  async logout(): Promise<void> {
-    throw new Error('Not implemented.');
+  if (storedToken.revokedAt) {
+  throw new UnauthorizedException(
+    'Refresh token has been revoked.',
+  );
+}
+
+if (storedToken.expiresAt < new Date()) {
+  throw new UnauthorizedException(
+    'Refresh token has expired.',
+  );
+}
+
+const isTokenValid =
+  await PasswordUtil.compare(
+    refreshTokenDto.refreshToken,
+    storedToken.tokenHash,
+  );
+
+if (!isTokenValid) {
+  throw new UnauthorizedException(
+    'Invalid refresh token.',
+  );
+}
+
+await this.refreshTokenRepository.revoke(
+  storedToken.id,
+);
+
+const user = await this.userRepository.findById(
+  storedToken.userId,
+);
+
+if (!user) {
+  throw new UnauthorizedException(
+    'User not found.',
+  );
+}
+
+this.validateUserStatus(user);
+
+this.validateTenantStatus(user);
+
+const newSessionId = randomUUID();
+
+const tokens = await this.generateTokenPair(
+  user,
+  newSessionId,
+);
+
+await this.createRefreshTokenSession(
+  newSessionId,
+  user.id,
+  tokens.refreshToken,
+);
+
+await this.userRepository.updateLastLogin(
+  user.id,
+);
+
+return tokens;
+}
+
+async logout (
+  logoutDto: LogoutDto,
+): Promise<LogoutResponseDto> {
+  const payload =
+    await this.tokenService.verifyRefreshToken(
+      logoutDto.refreshToken,
+    );
+
+  const storedToken =
+    await this.refreshTokenRepository.findById(
+      payload.sessionId,
+    );
+
+  if (!storedToken) {
+    throw new UnauthorizedException(
+      'Invalid refresh token.',
+    );
   }
 
+  if (storedToken.revokedAt) {
+    throw new UnauthorizedException(
+      'Refresh token has already been revoked.',
+    );
+  }
+
+  await this.refreshTokenRepository.revoke(
+    storedToken.id,
+  );
+
+  return {
+    message: 'Logged out successfully.',
+  };
+}
+
+async logoutAll(
+  logoutDto: LogoutDto,
+): Promise<LogoutAllResponseDto> {
+  const payload =
+    await this.tokenService.verifyRefreshToken(
+      logoutDto.refreshToken,
+    );
+
+  const storedToken =
+    await this.refreshTokenRepository.findById(
+      payload.sessionId,
+    );
+
+  if (!storedToken) {
+    throw new UnauthorizedException(
+      'Invalid refresh token.',
+    );
+  }
+
+  if (storedToken.revokedAt) {
+    throw new UnauthorizedException(
+      'Refresh token has already been revoked.',
+    );
+  }
+
+  await this.refreshTokenRepository.revokeAll(
+    storedToken.userId,
+  );
+
+  return {
+    message: 'Logged out from all devices successfully.',
+  };
+}
   // =====================================================
   // Private Methods
   // =====================================================
@@ -126,6 +262,25 @@ return tokens;
   tokenType: 'Bearer',
 };
   }
+
+  private async createRefreshTokenSession(
+  sessionId: string,
+  userId: string,
+  refreshToken: string,
+): Promise<void> {
+  const refreshTokenHash =
+    await PasswordUtil.hash(refreshToken);
+
+  const refreshTokenExpiresAt =
+    this.tokenService.getRefreshTokenExpiryDate();
+
+  await this.refreshTokenRepository.create(
+    sessionId,
+    userId,
+    refreshTokenHash,
+    refreshTokenExpiresAt,
+  );
+}
 
   private buildAccessTokenPayload(
     user: AuthUser,

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from 'jsonwebtoken';
+
 import type { StringValue } from 'ms';
 import { AccessTokenPayload } from '../interfaces/access-token-payload.interface';
 import { RefreshTokenPayload } from '../interfaces/refresh-token-payload.interface';
@@ -30,6 +32,18 @@ export class TokenService {
       ) as StringValue,
     });
   }
+
+  async verifyRefreshToken(
+  token: string,
+): Promise<RefreshTokenPayload> {
+  return this.jwtService.verifyAsync<
+    RefreshTokenPayload & JwtPayload
+  >(token, {
+    secret: this.configService.getOrThrow<string>(
+      'JWT_REFRESH_SECRET',
+    ),
+  });
+}
 
     getRefreshTokenExpiryDate(): Date {
     const refreshTokenExpiresIn =

@@ -1,3 +1,4 @@
+import { RefreshToken } from '../interfaces/refresh-token.interface';
 export abstract class RefreshTokenRepository {
   abstract create(
     sessionId: string,
@@ -6,11 +7,18 @@ export abstract class RefreshTokenRepository {
     expiresAt: Date,
   ): Promise<void>;
 
-  abstract findById(sessionId: string): Promise<unknown | null>;
 
-  abstract revoke(sessionId: string): Promise<void>;
+abstract findById(
+  sessionId: string,
+): Promise<RefreshToken | null>;
 
-  abstract revokeAll(userId: string): Promise<void>;
+  abstract revoke(
+    sessionId: string,
+  ): Promise<void>;
+
+  abstract revokeAll(
+    userId: string,
+  ): Promise<void>;
 
   abstract deleteExpired(): Promise<void>;
 }
