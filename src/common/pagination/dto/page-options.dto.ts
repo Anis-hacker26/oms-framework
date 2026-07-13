@@ -11,7 +11,6 @@ import {
 
 import { PaginationConstants } from '../constants/pagination.constants';
 import { SortOrder } from '../enums/sort-order.enum';
-import { TenantStatus } from '../../../modules/tenant/enums/tenant-status.enum';
 
 export class PageOptionsDto {
   @ApiPropertyOptional({
@@ -67,12 +66,4 @@ export class PageOptionsDto {
   @IsOptional()
   @IsString()
   search?: string;
-
-  @ApiPropertyOptional({
-    enum: TenantStatus,
-    description: 'Filter tenants by status.',
-  })
-  @IsOptional()
-  @IsEnum(TenantStatus)
-  status?: TenantStatus;
 }

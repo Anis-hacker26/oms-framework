@@ -8,11 +8,11 @@ import { PrismaModule } from './database/prisma/prisma.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 
-
 @Module({
-  imports: [CommonModule, PrismaModule, TenantModule, AuthModule],
+  imports: [CommonModule, PrismaModule, TenantModule, AuthModule, UsersModule],
   controllers: [AppController],
   providers: [
     AppService,

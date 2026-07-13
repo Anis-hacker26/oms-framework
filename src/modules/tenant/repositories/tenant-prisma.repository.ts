@@ -3,7 +3,7 @@ import { Prisma, Tenant } from '@prisma/client';
 
 import { PrismaService } from '../../../database/prisma/prisma.service';
 
-import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto';
+import { TenantQueryDto } from '../dto/tenant-query.dto';
 
 import { CreateTenantDto } from '../dto/create-tenant.dto';
 import { TenantStatus } from '../enums/tenant-status.enum';
@@ -34,7 +34,7 @@ export class TenantPrismaRepository extends TenantRepository {
     });
   }
 
-  async findAll(pageOptions: PageOptionsDto): Promise<{
+  async findAll(pageOptions: TenantQueryDto): Promise<{
     items: Tenant[];
     totalItems: number;
   }> {

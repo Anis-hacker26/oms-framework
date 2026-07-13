@@ -1,6 +1,6 @@
 import { Tenant } from '@prisma/client';
 
-import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto';
+import { TenantQueryDto } from '../dto/tenant-query.dto';
 
 import { CreateTenantDto } from '../dto/create-tenant.dto';
 import { UpdateTenantDto } from '../dto/update-tenant.dto';
@@ -16,7 +16,7 @@ export abstract class TenantRepository {
 
   abstract findById(id: string): Promise<Tenant | null>;
 
-  abstract findAll(pageOptions: PageOptionsDto): Promise<{
+  abstract findAll(query: TenantQueryDto): Promise<{
     items: Tenant[];
     totalItems: number;
   }>;

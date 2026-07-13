@@ -113,9 +113,14 @@ model User {
   updatedAt DateTime @updatedAt
 
   // =====================================================
+  // Relationships
+  // =====================================================
+
+  refreshTokens UserRefreshToken[]
+
+  // =====================================================
   // Indexes
   // =====================================================
-  refreshTokens UserRefreshToken[]
 
   @@index([tenantId])
   @@index([email])

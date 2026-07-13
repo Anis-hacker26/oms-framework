@@ -32,7 +32,7 @@ import { TenantMessages } from '../constants/tenant.messages';
 import { SuccessMessage } from '../../../common/decorators/success-message.decorator';
 
 import { PageDto } from '../../../common/pagination/dto/page.dto';
-import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto';
+import { TenantQueryDto } from '../dto/tenant-query.dto';
 
 @ApiTags('Tenant')
 @Controller('tenants')
@@ -130,7 +130,7 @@ export class TenantController {
     type: PageDto,
   })
   async findAll(
-    @Query() pageOptions: PageOptionsDto,
+    @Query() pageOptions: TenantQueryDto,
   ): Promise<PageDto<TenantResponseDto>> {
     return this.tenantService.findAll(pageOptions);
   }

@@ -10,7 +10,7 @@ import { TENANT_REPOSITORY } from '../constants/tenant.constants';
 import { AppLoggerService } from '../../../common/logging/app-logger.service';
 import { SortOrder } from '../../../common/pagination/enums/sort-order.enum';
 import { TenantStatus } from '../enums/tenant-status.enum';
-import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto';
+import { TenantQueryDto } from '../dto/tenant-query.dto';
 
 describe('TenantService', () => {
   let service: TenantService;
@@ -480,7 +480,7 @@ describe('TenantService', () => {
       },
     ];
 
-    const pageOptions: PageOptionsDto = {
+    const pageOptions: TenantQueryDto = {
       page: 1,
       limit: 10,
       sortBy: 'createdAt',
@@ -554,7 +554,7 @@ describe('TenantService', () => {
     });
 
     it('should pass SUSPENDED status filter to repository', async () => {
-      const options: PageOptionsDto = {
+      const options: TenantQueryDto = {
         ...pageOptions,
         status: TenantStatus.SUSPENDED,
       };
@@ -570,7 +570,7 @@ describe('TenantService', () => {
     });
 
     it('should pass combined search and status filter', async () => {
-      const options: PageOptionsDto = {
+      const options: TenantQueryDto = {
         ...pageOptions,
         search: 'google',
         status: TenantStatus.ACTIVE,

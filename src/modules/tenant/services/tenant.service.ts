@@ -21,7 +21,7 @@ import { AppLoggerService } from '../../../common/logging/app-logger.service';
 
 import { PageDto } from '../../../common/pagination/dto/page.dto';
 import { PageMetaDto } from '../../../common/pagination/dto/page-meta.dto';
-import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto';
+import { TenantQueryDto } from '../dto/tenant-query.dto';
 
 @Injectable()
 export class TenantService {
@@ -76,7 +76,7 @@ export class TenantService {
   }
 
   async findAll(
-    pageOptions: PageOptionsDto,
+    pageOptions: TenantQueryDto,
   ): Promise<PageDto<TenantResponseDto>> {
     this.logger.log(
       'TenantService',
