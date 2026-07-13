@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Patch,
+} from '@nestjs/common';
 
 import {
   ApiBadRequestResponse,
@@ -19,6 +27,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { PageDto } from '../../../common/pagination/dto/page.dto';
 import { UserQueryDto } from '../dto/user-query.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 import { UsersService } from '../services/users.service';
 
@@ -85,6 +94,89 @@ export class UsersController {
   })
   async findById(@Param('id') id: string): Promise<UserResponseDto> {
     return this.usersService.findById(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Update User',
+    description:
+      'Updates an existing user. Only the fields provided in the request will be modified.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiBody({
+    type: UpdateUserDto,
+    description: 'Fields to update. All fields are optional.',
+  })
+  @ApiOkResponse({
+    description: 'User updated successfully.',
+    type: UserResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid user ID or invalid request payload.',
+  })
+  @ApiConflictResponse({
+    description: 'User email already exists.',
+  })
+  @ApiNotFoundResponse({
+    description: UserMessages.NOT_FOUND,
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.update(id, dto);
+  }
+
+  @Patch(':id/suspend')
+  @ApiOperation({
+    summary: 'Suspend User',
+    description: 'Suspends an existing user.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiOkResponse({
+    description: UserMessages.SUSPENDED,
+    type: UserResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: UserMessages.ALREADY_SUSPENDED,
+  })
+  @ApiNotFoundResponse({
+    description: UserMessages.NOT_FOUND,
+  })
+  async suspend(@Param('id') id: string): Promise<UserResponseDto> {
+    return this.usersService.suspend(id);
+  }
+
+  @Patch(':id/activate')
+  @ApiOperation({
+    summary: 'Activate User',
+    description: 'Activates a suspended user.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiOkResponse({
+    description: UserMessages.ACTIVATED,
+    type: UserResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: UserMessages.ALREADY_ACTIVE,
+  })
+  @ApiNotFoundResponse({
+    description: UserMessages.NOT_FOUND,
+  })
+  async activate(@Param('id') id: string): Promise<UserResponseDto> {
+    return this.usersService.activate(id);
   }
 
   @Get()

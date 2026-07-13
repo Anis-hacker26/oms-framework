@@ -293,7 +293,7 @@ describe('UsersService', () => {
 
       const result = await service.findAll(query);
 
-     expect(result.items).toEqual([]);
+      expect(result.items).toEqual([]);
       expect(result.meta.totalItems).toBe(0);
     });
 
@@ -324,6 +324,218 @@ describe('UsersService', () => {
       );
 
       expect(userRepository.findAll).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================
+  // Update User
+  // =========================================
+
+  describe('update', () => {
+    it('should update a user successfully', async () => {
+      userRepository.findById.mockResolvedValue(user);
+      userRepository.findByEmail.mockResolvedValue(null);
+
+      const updatedUser = {
+        ...user,
+        email: 'updated@example.com',
+        firstName: 'Updated',
+        lastName: 'User',
+      };
+
+      userRepository.update.mockResolvedValue(updatedUser);
+
+      const result = await service.update(user.id, {
+        email: 'updated@example.com',
+        firstName: 'Updated',
+        lastName: 'User',
+      });
+
+      expect(userRepository.findById).toHaveBeenCalledWith(user.id);
+
+      expect(userRepository.findByEmail).toHaveBeenCalledWith(
+        'updated@example.com',
+      );
+
+      expect(userRepository.update).toHaveBeenCalledWith(user.id, {
+        email: 'updated@example.com',
+        firstName: 'Updated',
+        lastName: 'User',
+      });
+
+      expect(result.email).toBe('updated@example.com');
+      expect(result.firstName).toBe('Updated');
+      expect(result.lastName).toBe('User');
+    });
+
+    it('should throw NotFoundException when user does not exist', async () => {
+      userRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.update(user.id, {
+          firstName: 'Updated',
+        }),
+      ).rejects.toThrow(new NotFoundException(UserMessages.NOT_FOUND));
+
+      expect(userRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when email already exists', async () => {
+      userRepository.findById.mockResolvedValue(user);
+
+      userRepository.findByEmail.mockResolvedValue({
+        ...user,
+        id: 'another-user-id',
+      });
+
+      await expect(
+        service.update(user.id, {
+          email: 'updated@example.com',
+        }),
+      ).rejects.toThrow(new ConflictException(UserMessages.DUPLICATE_EMAIL));
+
+      expect(userRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when user id is invalid', async () => {
+      await expect(
+        service.update('invalid-id', {
+          firstName: 'Updated',
+        }),
+      ).rejects.toThrow(new BadRequestException(UserMessages.INVALID_ID));
+
+      expect(userRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when no changes are provided', async () => {
+      userRepository.findById.mockResolvedValue(user);
+
+      await expect(service.update(user.id, {})).rejects.toThrow(
+        new BadRequestException(UserMessages.NO_CHANGES),
+      );
+
+      expect(userRepository.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================
+  // Suspend User
+  // =========================================
+
+  describe('suspend', () => {
+    it('should suspend a user successfully', async () => {
+      userRepository.findById.mockResolvedValue(user);
+
+      const suspendedUser = {
+        ...user,
+        status: UserStatus.SUSPENDED,
+      };
+
+      userRepository.updateStatus.mockResolvedValue(suspendedUser);
+
+      const result = await service.suspend(user.id);
+
+      expect(userRepository.findById).toHaveBeenCalledWith(user.id);
+
+      expect(userRepository.updateStatus).toHaveBeenCalledWith(
+        user.id,
+        UserStatus.SUSPENDED,
+      );
+
+      expect(result.status).toBe(UserStatus.SUSPENDED);
+    });
+
+    it('should throw NotFoundException when user does not exist', async () => {
+      userRepository.findById.mockResolvedValue(null);
+
+      await expect(service.suspend(user.id)).rejects.toThrow(
+        new NotFoundException(UserMessages.NOT_FOUND),
+      );
+
+      expect(userRepository.updateStatus).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when user is already suspended', async () => {
+      userRepository.findById.mockResolvedValue({
+        ...user,
+        status: UserStatus.SUSPENDED,
+      });
+
+      await expect(service.suspend(user.id)).rejects.toThrow(
+        new BadRequestException(UserMessages.ALREADY_SUSPENDED),
+      );
+
+      expect(userRepository.updateStatus).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for invalid user id', async () => {
+      await expect(service.suspend('invalid-id')).rejects.toThrow(
+        new BadRequestException(UserMessages.INVALID_ID),
+      );
+
+      expect(userRepository.findById).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================
+  // Activate User
+  // =========================================
+
+  describe('activate', () => {
+    it('should activate a user successfully', async () => {
+      userRepository.findById.mockResolvedValue({
+        ...user,
+        status: UserStatus.SUSPENDED,
+      });
+
+      const activatedUser = {
+        ...user,
+        status: UserStatus.ACTIVE,
+      };
+
+      userRepository.updateStatus.mockResolvedValue(activatedUser);
+
+      const result = await service.activate(user.id);
+
+      expect(userRepository.findById).toHaveBeenCalledWith(user.id);
+
+      expect(userRepository.updateStatus).toHaveBeenCalledWith(
+        user.id,
+        UserStatus.ACTIVE,
+      );
+
+      expect(result.status).toBe(UserStatus.ACTIVE);
+    });
+
+    it('should throw NotFoundException when user does not exist', async () => {
+      userRepository.findById.mockResolvedValue(null);
+
+      await expect(service.activate(user.id)).rejects.toThrow(
+        new NotFoundException(UserMessages.NOT_FOUND),
+      );
+
+      expect(userRepository.updateStatus).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when user is already active', async () => {
+      userRepository.findById.mockResolvedValue({
+        ...user,
+        status: UserStatus.ACTIVE,
+      });
+
+      await expect(service.activate(user.id)).rejects.toThrow(
+        new BadRequestException(UserMessages.ALREADY_ACTIVE),
+      );
+
+      expect(userRepository.updateStatus).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for invalid user id', async () => {
+      await expect(service.activate('invalid-id')).rejects.toThrow(
+        new BadRequestException(UserMessages.INVALID_ID),
+      );
+
+      expect(userRepository.findById).not.toHaveBeenCalled();
     });
   });
 });

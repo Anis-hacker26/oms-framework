@@ -110,12 +110,23 @@ export class UserPrismaRepository extends UserRepository {
   // =========================================
 
   async update(id: string, data: UpdateUserData): Promise<UserRecord> {
-    return this.prisma.user.update({
-      where: {
-        id,
-      },
-      data,
-    });
+    try {
+      return await this.prisma.user.update({
+        where: {
+          id,
+        },
+        data,
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(UserMessages.DUPLICATE_EMAIL);
+      }
+
+      throw error;
+    }
   }
 
   async updateStatus(id: string, status: UserStatus): Promise<UserRecord> {

@@ -10,6 +10,7 @@ export interface CreateUserData {
 }
 
 export interface UpdateUserData {
+  email?: string;
   firstName?: string;
   lastName?: string;
 }
