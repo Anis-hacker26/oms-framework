@@ -14,6 +14,8 @@ import { TokenService } from './services/token.service';
 
 import { UserRepository } from './repositories/user.repository';
 import { PrismaUserRepository } from './repositories/prisma-user.repository';
+import { RoleRepository } from './repositories/role.repository';
+import { PrismaRoleRepository } from './repositories/prisma-role.repository';
 
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { PrismaRefreshTokenRepository } from './repositories/prisma-refresh-token.repository';
@@ -53,6 +55,11 @@ import { PrismaRefreshTokenRepository } from './repositories/prisma-refresh-toke
   {
     provide: RefreshTokenRepository,
     useClass: PrismaRefreshTokenRepository,
+  },
+
+  {
+    provide: RoleRepository,
+    useClass: PrismaRoleRepository,
   },
 ],
 

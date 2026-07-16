@@ -21,11 +21,16 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+
 import { TenantService } from '../services/tenant.service';
 
 import { CreateTenantDto } from '../dto/create-tenant.dto';
 import { UpdateTenantDto } from '../dto/update-tenant.dto';
 import { TenantResponseDto } from '../dto/tenant-response.dto';
+
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 import { TenantMessages } from '../constants/tenant.messages';
 
@@ -34,11 +39,24 @@ import { SuccessMessage } from '../../../common/decorators/success-message.decor
 import { PageDto } from '../../../common/pagination/dto/page.dto';
 import { TenantQueryDto } from '../dto/tenant-query.dto';
 
+import { Permissions } from '../../../common/authorization/decorators/permissions.decorator';
+import { PermissionsGuard } from '../../../common/authorization/guards/permissions.guard';
+import { Permission } from '../../../common/authorization/enums/permission.enum';
+
+
+@ApiBearerAuth('access-token')
 @ApiTags('Tenant')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('tenants')
 export class TenantController {
   constructor(private readonly tenantService: TenantService) {}
 
+
+  // =========================================
+  // Create Operations
+  // =========================================
+
+  @Permissions(Permission.TENANT_CREATE)
   @Post()
   @SuccessMessage(TenantMessages.CREATED)
   @ApiOperation({
@@ -63,6 +81,12 @@ export class TenantController {
     return this.tenantService.create(dto);
   }
 
+
+  // =========================================
+  // Read Operations
+  // =========================================
+
+  @Permissions(Permission.TENANT_READ)
   @Get(':id')
   @SuccessMessage(TenantMessages.RETRIEVED)
   @ApiOperation({
@@ -88,6 +112,12 @@ export class TenantController {
     return this.tenantService.findById(id);
   }
 
+
+  // =========================================
+  // List Operations
+  // =========================================
+
+  @Permissions(Permission.TENANT_READ)
   @Get()
   @SuccessMessage(TenantMessages.LIST_RETRIEVED)
   @ApiOperation({
@@ -135,6 +165,12 @@ export class TenantController {
     return this.tenantService.findAll(pageOptions);
   }
 
+  // =========================================
+  // Update Operations
+  // =========================================
+
+
+  @Permissions(Permission.TENANT_UPDATE)
   @Patch(':id')
   @SuccessMessage(TenantMessages.UPDATED)
   @ApiOperation({
@@ -170,6 +206,13 @@ export class TenantController {
   ): Promise<TenantResponseDto> {
     return this.tenantService.update(id, dto);
   }
+
+
+  // =========================================
+  // Suspend Operations
+  // =========================================
+
+  @Permissions(Permission.TENANT_SUSPEND)
   @Patch(':id/suspend')
   @SuccessMessage(TenantMessages.SUSPENDED)
   @ApiOperation({
@@ -194,6 +237,12 @@ export class TenantController {
     return this.tenantService.suspend(id);
   }
 
+
+  // =========================================
+  // Activate Operations
+  // =========================================
+
+  @Permissions(Permission.TENANT_ACTIVATE)
   @Patch(':id/activate')
   @SuccessMessage(TenantMessages.ACTIVATED)
   @ApiOperation({

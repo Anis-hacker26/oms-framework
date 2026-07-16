@@ -21,6 +21,8 @@ import {
 } from '@nestjs/swagger';
 
 import { SuccessMessage } from '../../../common/decorators/success-message.decorator';
+import { UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 import { UserMessages } from '../constants/user.messages';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -29,9 +31,17 @@ import { PageDto } from '../../../common/pagination/dto/page.dto';
 import { UserQueryDto } from '../dto/user-query.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
+import { Permissions } from '../../../common/authorization/decorators/permissions.decorator';
+import { PermissionsGuard } from '../../../common/authorization/guards/permissions.guard';
+import { Permission } from '../../../common/authorization/enums/permission.enum';
+
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+
 import { UsersService } from '../services/users.service';
 
+@ApiBearerAuth('access-token')
 @ApiTags('Users')
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -40,6 +50,7 @@ export class UsersController {
   // Create Operations
   // =========================================
 
+  @Permissions(Permission.USER_CREATE)
   @Post()
   @SuccessMessage(UserMessages.CREATED)
   @ApiOperation({
@@ -71,6 +82,7 @@ export class UsersController {
   // Read Operations
   // =========================================
 
+  @Permissions(Permission.USER_READ)
   @Get(':id')
   @SuccessMessage(UserMessages.RETRIEVED)
   @ApiOperation({
@@ -96,6 +108,13 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
+
+  // =========================================
+  // Update Operations
+  // =========================================
+
+
+  @Permissions(Permission.USER_UPDATE)
   @Patch(':id')
   @ApiOperation({
     summary: 'Update User',
@@ -131,6 +150,14 @@ export class UsersController {
     return this.usersService.update(id, dto);
   }
 
+
+
+  // =========================================
+  // Suspend Operations
+  // =========================================
+
+
+  @Permissions(Permission.USER_SUSPEND)
   @Patch(':id/suspend')
   @ApiOperation({
     summary: 'Suspend User',
@@ -155,6 +182,14 @@ export class UsersController {
     return this.usersService.suspend(id);
   }
 
+
+
+  // =========================================
+  // Activate Operations
+  // =========================================
+
+
+  @Permissions(Permission.USER_ACTIVATE)
   @Patch(':id/activate')
   @ApiOperation({
     summary: 'Activate User',
@@ -179,6 +214,14 @@ export class UsersController {
     return this.usersService.activate(id);
   }
 
+
+
+  // =========================================
+  // List Operations
+  // =========================================
+
+
+  @Permissions(Permission.USER_READ)
   @Get()
   @ApiOperation({
     summary: 'List Users',

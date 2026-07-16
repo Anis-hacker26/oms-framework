@@ -55,7 +55,8 @@ model Tenant {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Users     User[]
+  users     User[]
+  roles     Role[]
 
   @@index([name])
   @@index([contactEmail])
@@ -117,6 +118,7 @@ model User {
   // =====================================================
 
   refreshTokens UserRefreshToken[]
+  roles         UserRole[]
 
   // =====================================================
   // Indexes
@@ -169,4 +171,171 @@ model UserRefreshToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model Permission {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // Permission Information
+  // =====================================================
+
+  name String @unique @db.VarChar(100)
+
+  description String?
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  // =====================================================
+  // Relationships
+  // =====================================================
+
+  rolePermissions RolePermission[]
+
+  // =====================================================
+  // Indexes
+  // =====================================================
+}
+
+model Role {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // Tenant Relationship
+  // =====================================================
+
+  tenantId String?
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  // =====================================================
+  // Role Information
+  // =====================================================
+
+  name String @db.VarChar(100)
+
+  description String? @db.VarChar(255)
+
+  // =====================================================
+  // System Role
+  // =====================================================
+
+  isSystem Boolean @default(false)
+
+  // =====================================================
+  // Soft Delete
+  // =====================================================
+
+  deletedAt DateTime?
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  // =====================================================
+  // Relationships
+  // =====================================================
+
+  users UserRole[]
+
+  permissions RolePermission[]
+
+  // =====================================================
+  // Constraints
+  // =====================================================
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([name])
+}
+
+model UserRole {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // Relationships
+  // =====================================================
+
+  userId String
+
+  roleId String
+
+  assignedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  assignedAt DateTime @default(now())
+
+  // =====================================================
+  // Constraints
+  // =====================================================
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model RolePermission {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // Relationships
+  // =====================================================
+
+  roleId String
+
+  permissionId String
+
+  assignedBy String?
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict)
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  assignedAt DateTime @default(now())
+
+  // =====================================================
+  // Constraints
+  // =====================================================
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
 }

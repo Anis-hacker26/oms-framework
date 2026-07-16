@@ -1,7 +1,7 @@
-import { PrismaClient, Tenant, UserStatus } from '@prisma/client';
+import { Tenant, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+import { prisma } from '../prisma';
 
 export async function seedUser(
   tenant: Tenant,
@@ -28,5 +28,38 @@ export async function seedUser(
     },
   });
 
-  console.log(`✅ User created: ${user.email}`);
+  // -----------------------------
+  // Find SUPER_ADMIN role
+  // -----------------------------
+  const superAdminRole = await prisma.role.findFirst({
+    where: {
+      name: 'SUPER_ADMIN',
+      tenantId: null,
+    },
+  });
+
+  if (!superAdminRole) {
+    throw new Error('SUPER_ADMIN role not found.');
+  }
+
+  // -----------------------------
+  // Assign SUPER_ADMIN role
+  // -----------------------------
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: user.id,
+        roleId: superAdminRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: user.id,
+      roleId: superAdminRole.id,
+    },
+  });
+
+  console.log(
+    `✅ User created: ${user.email} (SUPER_ADMIN assigned)`,
+  );
 }

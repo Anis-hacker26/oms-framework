@@ -14,20 +14,23 @@ import { LogoutAllResponseDto } from '../dto/logout-all-response.dto';
 import { AccessTokenPayload } from '../interfaces/access-token-payload.interface';
 import { AuthUser } from '../interfaces/auth-user.interface';
 import { RefreshTokenPayload } from '../interfaces/refresh-token-payload.interface';
+import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 import { UserRepository } from '../repositories/user.repository';
+import { RoleRepository } from '../repositories/role.repository';
 
 import { TokenService } from './token.service';
 import { PasswordUtil } from '../utils/password.util';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly refreshTokenRepository: RefreshTokenRepository,
-    private readonly tokenService: TokenService,
-  ) {}
+ constructor(
+  private readonly userRepository: UserRepository,
+  private readonly refreshTokenRepository: RefreshTokenRepository,
+  private readonly roleRepository: RoleRepository,
+  private readonly tokenService: TokenService,
+) {}
 
   // =====================================================
   // Public Methods
@@ -303,6 +306,26 @@ async logoutAll(
       type: 'refresh',
     };
   }
+
+  private async buildAuthenticatedUser(
+  user: AuthUser,
+): Promise<AuthenticatedUser> {
+  const roles =
+    await this.roleRepository.getUserRoles(
+      user.id,
+    );
+
+  const permissions =
+    await this.roleRepository.getUserPermissions(
+      user.id,
+    );
+
+  return {
+    ...user,
+    roles,
+    permissions,
+  };
+}
 
   private validateUserStatus(user: AuthUser): void {
   if (user.status !== 'ACTIVE') {
