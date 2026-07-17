@@ -5,6 +5,8 @@ import { UserRepository } from '../repositories/user.repository';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 import { TokenService } from '../services/token.service';
 import { PasswordUtil } from '../utils/password.util';
+import { RoleRepository } from '../repositories/role.repository';
+
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -22,6 +24,11 @@ describe('AuthService', () => {
     revokeAll: jest.fn(),
     deleteExpired: jest.fn(),
   };
+
+  const mockRoleRepository = {
+  getUserRoles: jest.fn(),
+  getUserPermissions: jest.fn(),
+};
 
   const mockTokenService = {
     generateAccessToken: jest.fn(),
@@ -48,6 +55,10 @@ describe('AuthService', () => {
           {
             provide: TokenService,
             useValue: mockTokenService,
+          },
+          {
+            provide: RoleRepository,
+            useValue: mockRoleRepository,
           },
         ],
       }).compile();

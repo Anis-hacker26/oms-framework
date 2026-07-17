@@ -76,7 +76,7 @@ export class TenantService {
   }
 
   async findAll(
-    pageOptions: TenantQueryDto,
+  pageOptions: TenantQueryDto,
   ): Promise<PageDto<TenantResponseDto>> {
     this.logger.log(
       'TenantService',
