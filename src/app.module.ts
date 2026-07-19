@@ -10,9 +10,10 @@ import { CommonModule } from './common/common.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
-  imports: [CommonModule, PrismaModule, TenantModule, AuthModule, UsersModule],
+  imports: [CommonModule, PrismaModule, TenantModule, AuthModule, UsersModule, OrdersModule],
   controllers: [AppController],
   providers: [
     AppService,

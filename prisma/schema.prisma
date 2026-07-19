@@ -12,6 +12,19 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum OrderStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+  FAILED
+  ARCHIVED
+}
+
 model Tenant {
   // =====================================================
   // Primary Key
@@ -55,8 +68,14 @@ model Tenant {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  users     User[]
-  roles     Role[]
+
+  // =====================================================
+  // Relationships
+  // =====================================================
+
+  users  User[]
+  roles  Role[]
+  orders Order[]
 
   @@index([name])
   @@index([contactEmail])
@@ -118,7 +137,12 @@ model User {
   // =====================================================
 
   refreshTokens UserRefreshToken[]
-  roles         UserRole[]
+
+  roles UserRole[]
+
+  createdOrders Order[] @relation("CreatedOrders")
+
+  updatedOrders Order[] @relation("UpdatedOrders")
 
   // =====================================================
   // Indexes
@@ -338,4 +362,77 @@ model RolePermission {
   @@unique([roleId, permissionId])
   @@index([roleId])
   @@index([permissionId])
+}
+
+model Order {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // Tenant Relationship
+  // =====================================================
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  // =====================================================
+  // Order Information
+  // =====================================================
+
+  orderNumber String
+
+  title String
+
+  description String?
+
+  status OrderStatus @default(DRAFT)
+
+  metadata Json?
+
+  // =====================================================
+  // Audit Relationships
+  // =====================================================
+
+  createdById String
+
+  createdBy User @relation("CreatedOrders", fields: [createdById], references: [id])
+
+  updatedById String?
+
+  updatedBy User? @relation("UpdatedOrders", fields: [updatedById], references: [id])
+
+  // =====================================================
+  // Optimistic Locking
+  // =====================================================
+
+  version Int @default(1)
+
+  // =====================================================
+  // Soft Delete
+  // =====================================================
+
+  deletedAt DateTime?
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  // =====================================================
+  // Constraints
+  // =====================================================
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdById])
+  @@index([deletedAt])
+  @@index([createdAt])
 }
