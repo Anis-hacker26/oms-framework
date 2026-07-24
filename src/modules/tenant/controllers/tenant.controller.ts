@@ -43,14 +43,12 @@ import { Permissions } from '../../../common/authorization/decorators/permission
 import { PermissionsGuard } from '../../../common/authorization/guards/permissions.guard';
 import { Permission } from '../../../common/authorization/enums/permission.enum';
 
-
 @ApiBearerAuth('access-token')
 @ApiTags('Tenant')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('tenants')
 export class TenantController {
   constructor(private readonly tenantService: TenantService) {}
-
 
   // =========================================
   // Create Operations
@@ -81,7 +79,6 @@ export class TenantController {
     return this.tenantService.create(dto);
   }
 
-
   // =========================================
   // Read Operations
   // =========================================
@@ -111,7 +108,6 @@ export class TenantController {
   async findById(@Param('id') id: string): Promise<TenantResponseDto> {
     return this.tenantService.findById(id);
   }
-
 
   // =========================================
   // List Operations
@@ -169,7 +165,6 @@ export class TenantController {
   // Update Operations
   // =========================================
 
-
   @Permissions(Permission.TENANT_UPDATE)
   @Patch(':id')
   @SuccessMessage(TenantMessages.UPDATED)
@@ -207,7 +202,6 @@ export class TenantController {
     return this.tenantService.update(id, dto);
   }
 
-
   // =========================================
   // Suspend Operations
   // =========================================
@@ -236,7 +230,6 @@ export class TenantController {
   async suspend(@Param('id') id: string): Promise<TenantResponseDto> {
     return this.tenantService.suspend(id);
   }
-
 
   // =========================================
   // Activate Operations

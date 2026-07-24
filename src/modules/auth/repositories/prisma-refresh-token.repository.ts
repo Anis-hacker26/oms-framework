@@ -9,21 +9,21 @@ export class PrismaRefreshTokenRepository extends RefreshTokenRepository {
     super();
   }
 
-async create(
-  sessionId: string,
-  userId: string,
-  tokenHash: string,
-  expiresAt: Date,
-): Promise<void> {
-  await this.prisma.userRefreshToken.create({
-    data: {
-      id: sessionId,
-      userId,
-      tokenHash,
-      expiresAt,
-    },
-  });
-}
+  async create(
+    sessionId: string,
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.prisma.userRefreshToken.create({
+      data: {
+        id: sessionId,
+        userId,
+        tokenHash,
+        expiresAt,
+      },
+    });
+  }
 
   async findById(sessionId: string) {
     return this.prisma.userRefreshToken.findUnique({

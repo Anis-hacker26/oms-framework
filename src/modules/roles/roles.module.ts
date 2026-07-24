@@ -23,7 +23,7 @@ import { RoleMapper } from './mappers/role.mapper';
   providers: [
     RolesService,
 
-     RoleMapper,
+    RoleMapper,
 
     {
       provide: RoleRepository,

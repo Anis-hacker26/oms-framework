@@ -108,11 +108,9 @@ export class UsersController {
     return this.usersService.findById(id);
   }
 
-
   // =========================================
   // Update Operations
   // =========================================
-
 
   @Permissions(Permission.USER_UPDATE)
   @Patch(':id')
@@ -150,12 +148,9 @@ export class UsersController {
     return this.usersService.update(id, dto);
   }
 
-
-
   // =========================================
   // Suspend Operations
   // =========================================
-
 
   @Permissions(Permission.USER_SUSPEND)
   @Patch(':id/suspend')
@@ -182,12 +177,9 @@ export class UsersController {
     return this.usersService.suspend(id);
   }
 
-
-
   // =========================================
   // Activate Operations
   // =========================================
-
 
   @Permissions(Permission.USER_ACTIVATE)
   @Patch(':id/activate')
@@ -214,12 +206,9 @@ export class UsersController {
     return this.usersService.activate(id);
   }
 
-
-
   // =========================================
   // List Operations
   // =========================================
-
 
   @Permissions(Permission.USER_READ)
   @Get()

@@ -48,13 +48,13 @@ export enum Permission {
   // ---------------------------------------------------------------------------
   // Permission Management
   // ---------------------------------------------------------------------------
- // User Role Management
-ROLE_ASSIGN = 'role:assign',
-ROLE_UNASSIGN = 'role:unassign',
+  // User Role Management
+  ROLE_ASSIGN = 'role:assign',
+  ROLE_UNASSIGN = 'role:unassign',
 
-// Role Permission Management
-ROLE_PERMISSION_ASSIGN = 'role-permission:assign',
-ROLE_PERMISSION_REMOVE = 'role-permission:remove',
+  // Role Permission Management
+  ROLE_PERMISSION_ASSIGN = 'role-permission:assign',
+  ROLE_PERMISSION_REMOVE = 'role-permission:remove',
 
   // ---------------------------------------------------------------------------
   // Order Permissions
@@ -71,6 +71,8 @@ ROLE_PERMISSION_REMOVE = 'role-permission:remove',
   // ---------------------------------------------------------------------------
   PAYMENT_CREATE = 'payment:create',
   PAYMENT_READ = 'payment:read',
+  PAYMENT_UPDATE = 'payment:update',
+  PAYMENT_DELETE = 'payment:delete',
   PAYMENT_REFUND = 'payment:refund',
 
   // ---------------------------------------------------------------------------

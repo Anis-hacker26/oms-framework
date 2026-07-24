@@ -24,20 +24,17 @@ describe('RolesService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    const module: TestingModule =
-      await Test.createTestingModule({
-        providers: [
-          RolesService,
-          {
-            provide: RoleRepository,
-            useValue: mockRoleRepository,
-          },
-        ],
-      }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        RolesService,
+        {
+          provide: RoleRepository,
+          useValue: mockRoleRepository,
+        },
+      ],
+    }).compile();
 
-    service = module.get<RolesService>(
-      RolesService,
-    );
+    service = module.get<RolesService>(RolesService);
   });
 
   it('should be defined', () => {

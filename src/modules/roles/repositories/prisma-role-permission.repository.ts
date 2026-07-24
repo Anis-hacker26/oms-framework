@@ -6,12 +6,8 @@ import { PrismaService } from '../../../database/prisma/prisma.service';
 import { RolePermissionRepository } from './role-permission.repository';
 
 @Injectable()
-export class PrismaRolePermissionRepository
-  extends RolePermissionRepository
-{
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {
+export class PrismaRolePermissionRepository extends RolePermissionRepository {
+  constructor(private readonly prisma: PrismaService) {
     super();
   }
 
@@ -29,9 +25,7 @@ export class PrismaRolePermissionRepository
     throw new Error('Method not implemented.');
   }
 
-  async getRolePermissions(
-    roleId: string,
-  ): Promise<Permission[]> {
+  async getRolePermissions(roleId: string): Promise<Permission[]> {
     throw new Error('Method not implemented.');
   }
 }

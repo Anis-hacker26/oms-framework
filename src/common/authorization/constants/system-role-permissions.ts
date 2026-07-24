@@ -40,6 +40,8 @@ export const SYSTEM_ROLE_PERMISSIONS = {
     // Payments
     Permission.PAYMENT_CREATE,
     Permission.PAYMENT_READ,
+    Permission.PAYMENT_UPDATE,
+    Permission.PAYMENT_DELETE,
     Permission.PAYMENT_REFUND,
 
     // Notifications

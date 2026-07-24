@@ -7,7 +7,6 @@ import { TokenService } from '../services/token.service';
 import { PasswordUtil } from '../utils/password.util';
 import { RoleRepository } from '../repositories/role.repository';
 
-
 describe('AuthService', () => {
   let service: AuthService;
 
@@ -26,9 +25,9 @@ describe('AuthService', () => {
   };
 
   const mockRoleRepository = {
-  getUserRoles: jest.fn(),
-  getUserPermissions: jest.fn(),
-};
+    getUserRoles: jest.fn(),
+    getUserPermissions: jest.fn(),
+  };
 
   const mockTokenService = {
     generateAccessToken: jest.fn(),
@@ -40,31 +39,29 @@ describe('AuthService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    const module: TestingModule =
-      await Test.createTestingModule({
-        providers: [
-          AuthService,
-          {
-            provide: UserRepository,
-            useValue: mockUserRepository,
-          },
-          {
-            provide: RefreshTokenRepository,
-            useValue: mockRefreshTokenRepository,
-          },
-          {
-            provide: TokenService,
-            useValue: mockTokenService,
-          },
-          {
-            provide: RoleRepository,
-            useValue: mockRoleRepository,
-          },
-        ],
-      }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AuthService,
+        {
+          provide: UserRepository,
+          useValue: mockUserRepository,
+        },
+        {
+          provide: RefreshTokenRepository,
+          useValue: mockRefreshTokenRepository,
+        },
+        {
+          provide: TokenService,
+          useValue: mockTokenService,
+        },
+        {
+          provide: RoleRepository,
+          useValue: mockRoleRepository,
+        },
+      ],
+    }).compile();
 
-    service =
-      module.get<AuthService>(AuthService);
+    service = module.get<AuthService>(AuthService);
   });
 
   it('should be defined', () => {
@@ -72,199 +69,152 @@ describe('AuthService', () => {
   });
 
   it('should login successfully', async () => {
-  const loginDto = {
-    email: 'admin@example.com',
-    password: 'Password@123',
-  };
+    const loginDto = {
+      email: 'admin@example.com',
+      password: 'Password@123',
+    };
 
-  const user = {
-    id: 'user-1',
-    tenantId: 'tenant-1',
-    email: 'admin@example.com',
-    passwordHash: 'hashed-password',
-    status: 'ACTIVE' as const,
-    tenant: {
-      id: 'tenant-1',
-      isActive: true,
-      isSuspended: false,
-    },
-  };
+    const user = {
+      id: 'user-1',
+      tenantId: 'tenant-1',
+      email: 'admin@example.com',
+      passwordHash: 'hashed-password',
+      status: 'ACTIVE' as const,
+      tenant: {
+        id: 'tenant-1',
+        isActive: true,
+        isSuspended: false,
+      },
+    };
 
-  mockUserRepository.findByEmail.mockResolvedValue(user);
+    mockUserRepository.findByEmail.mockResolvedValue(user);
 
-  jest.spyOn(
-  PasswordUtil,
-  'compare',
-)
-    .mockResolvedValue(true);
+    jest.spyOn(PasswordUtil, 'compare').mockResolvedValue(true);
 
-  mockTokenService.generateAccessToken.mockResolvedValue(
-    'access-token',
-  );
+    mockTokenService.generateAccessToken.mockResolvedValue('access-token');
 
-  mockTokenService.generateRefreshToken.mockResolvedValue(
-    'refresh-token',
-  );
+    mockTokenService.generateRefreshToken.mockResolvedValue('refresh-token');
 
-  mockTokenService.getRefreshTokenExpiryDate.mockReturnValue(
-    new Date(),
-  );
+    mockTokenService.getRefreshTokenExpiryDate.mockReturnValue(new Date());
 
-  mockRefreshTokenRepository.create.mockResolvedValue(
-    undefined,
-  );
+    mockRefreshTokenRepository.create.mockResolvedValue(undefined);
 
-  mockUserRepository.updateLastLogin.mockResolvedValue(
-    undefined,
-  );
+    mockUserRepository.updateLastLogin.mockResolvedValue(undefined);
 
-  const result = await service.login(loginDto);
+    const result = await service.login(loginDto);
 
-  expect(result).toEqual({
-    accessToken: 'access-token',
-    refreshToken: 'refresh-token',
-    expiresIn: 900,
-    tokenType: 'Bearer',
+    expect(result).toEqual({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresIn: 900,
+      tokenType: 'Bearer',
+    });
+
+    expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(loginDto.email);
+
+    expect(mockRefreshTokenRepository.create).toHaveBeenCalled();
+
+    expect(mockUserRepository.updateLastLogin).toHaveBeenCalledWith(user.id);
   });
 
-  expect(
-    mockUserRepository.findByEmail,
-  ).toHaveBeenCalledWith(loginDto.email);
+  it('should throw UnauthorizedException when user does not exist', async () => {
+    const loginDto = {
+      email: 'unknown@example.com',
+      password: 'Password@123',
+    };
 
-  expect(
-    mockRefreshTokenRepository.create,
-  ).toHaveBeenCalled();
+    mockUserRepository.findByEmail.mockResolvedValue(null);
 
-  expect(
-    mockUserRepository.updateLastLogin,
-  ).toHaveBeenCalledWith(user.id);
-});
+    await expect(service.login(loginDto)).rejects.toThrow(
+      'Invalid email or password.',
+    );
 
-it('should throw UnauthorizedException when user does not exist', async () => {
-  const loginDto = {
-    email: 'unknown@example.com',
-    password: 'Password@123',
-  };
+    expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(loginDto.email);
+  });
 
-  mockUserRepository.findByEmail.mockResolvedValue(null);
+  it('should throw UnauthorizedException for invalid password', async () => {
+    const loginDto = {
+      email: 'admin@example.com',
+      password: 'WrongPassword',
+    };
 
-  await expect(
-    service.login(loginDto),
-  ).rejects.toThrow(
-    'Invalid email or password.',
-  );
+    const user = {
+      id: 'user-1',
+      tenantId: 'tenant-1',
+      email: 'admin@example.com',
+      passwordHash: 'hashed-password',
+      status: 'ACTIVE' as const,
+      tenant: {
+        id: 'tenant-1',
+        isActive: true,
+        isSuspended: false,
+      },
+    };
 
-  expect(
-    mockUserRepository.findByEmail,
-  ).toHaveBeenCalledWith(loginDto.email);
-});
+    mockUserRepository.findByEmail.mockResolvedValue(user);
 
-it('should throw UnauthorizedException for invalid password', async () => {
-  const loginDto = {
-    email: 'admin@example.com',
-    password: 'WrongPassword',
-  };
+    jest.spyOn(PasswordUtil, 'compare').mockResolvedValue(false);
 
-  const user = {
-    id: 'user-1',
-    tenantId: 'tenant-1',
-    email: 'admin@example.com',
-    passwordHash: 'hashed-password',
-    status: 'ACTIVE' as const,
-    tenant: {
-      id: 'tenant-1',
-      isActive: true,
-      isSuspended: false,
-    },
-  };
+    await expect(service.login(loginDto)).rejects.toThrow(
+      'Invalid email or password.',
+    );
 
-  mockUserRepository.findByEmail.mockResolvedValue(user);
+    expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(loginDto.email);
+  });
 
-  jest.spyOn(
-  PasswordUtil,
-  'compare',
-)
-    .mockResolvedValue(false);
+  it('should throw UnauthorizedException for suspended user', async () => {
+    const loginDto = {
+      email: 'admin@example.com',
+      password: 'Password@123',
+    };
 
-  await expect(
-    service.login(loginDto),
-  ).rejects.toThrow(
-    'Invalid email or password.',
-  );
+    const user = {
+      id: 'user-1',
+      tenantId: 'tenant-1',
+      email: 'admin@example.com',
+      passwordHash: 'hashed-password',
+      status: 'SUSPENDED' as const,
+      tenant: {
+        id: 'tenant-1',
+        isActive: true,
+        isSuspended: false,
+      },
+    };
 
-  expect(
-    mockUserRepository.findByEmail,
-  ).toHaveBeenCalledWith(loginDto.email);
-});
+    mockUserRepository.findByEmail.mockResolvedValue(user);
 
-it('should throw UnauthorizedException for suspended user', async () => {
-  const loginDto = {
-    email: 'admin@example.com',
-    password: 'Password@123',
-  };
+    jest.spyOn(PasswordUtil, 'compare').mockResolvedValue(true);
 
-  const user = {
-    id: 'user-1',
-    tenantId: 'tenant-1',
-    email: 'admin@example.com',
-    passwordHash: 'hashed-password',
-    status: 'SUSPENDED' as const,
-    tenant: {
-      id: 'tenant-1',
-      isActive: true,
-      isSuspended: false,
-    },
-  };
+    await expect(service.login(loginDto)).rejects.toThrow(
+      'Your account has been suspended. Please contact your administrator.',
+    );
+  });
 
-  mockUserRepository.findByEmail.mockResolvedValue(user);
+  it('should throw UnauthorizedException for suspended tenant', async () => {
+    const loginDto = {
+      email: 'admin@example.com',
+      password: 'Password@123',
+    };
 
-  jest
-    .spyOn(
-      PasswordUtil,
-      'compare',
-    )
-    .mockResolvedValue(true);
+    const user = {
+      id: 'user-1',
+      tenantId: 'tenant-1',
+      email: 'admin@example.com',
+      passwordHash: 'hashed-password',
+      status: 'ACTIVE' as const,
+      tenant: {
+        id: 'tenant-1',
+        isActive: false,
+        isSuspended: true,
+      },
+    };
 
-  await expect(
-    service.login(loginDto),
-  ).rejects.toThrow(
-    'Your account has been suspended. Please contact your administrator.',
-  );
-});
+    mockUserRepository.findByEmail.mockResolvedValue(user);
 
-it('should throw UnauthorizedException for suspended tenant', async () => {
-  const loginDto = {
-    email: 'admin@example.com',
-    password: 'Password@123',
-  };
+    jest.spyOn(PasswordUtil, 'compare').mockResolvedValue(true);
 
-  const user = {
-    id: 'user-1',
-    tenantId: 'tenant-1',
-    email: 'admin@example.com',
-    passwordHash: 'hashed-password',
-    status: 'ACTIVE' as const,
-    tenant: {
-      id: 'tenant-1',
-      isActive: false,
-      isSuspended: true,
-    },
-  };
-
-  mockUserRepository.findByEmail.mockResolvedValue(user);
-
-  jest
-    .spyOn(
-      PasswordUtil,
-      'compare',
-    )
-    .mockResolvedValue(true);
-
-  await expect(
-    service.login(loginDto),
-  ).rejects.toThrow(
-    'Your organization account is not active.',
-  );
-});
-
+    await expect(service.login(loginDto)).rejects.toThrow(
+      'Your organization account is not active.',
+    );
+  });
 });

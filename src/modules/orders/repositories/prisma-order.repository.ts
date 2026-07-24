@@ -8,9 +8,7 @@ import { OrderRepository } from './order.repository';
 
 @Injectable()
 export class PrismaOrderRepository extends OrderRepository {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {
+  constructor(private readonly prisma: PrismaService) {
     super();
   }
 
@@ -18,9 +16,7 @@ export class PrismaOrderRepository extends OrderRepository {
   // Order Management
   // --------------------------------------------------------------------------
 
-  async create(
-    data: CreateOrderData,
-  ): Promise<Order> {
+  async create(data: CreateOrderData): Promise<Order> {
     return this.prisma.order.create({
       data: {
         tenantId: data.tenantId,
@@ -34,9 +30,7 @@ export class PrismaOrderRepository extends OrderRepository {
     });
   }
 
-  async findById(
-    id: string,
-  ): Promise<Order | null> {
+  async findById(id: string): Promise<Order | null> {
     return this.prisma.order.findFirst({
       where: {
         id,
@@ -58,9 +52,7 @@ export class PrismaOrderRepository extends OrderRepository {
     });
   }
 
-  async findAll(
-    tenantId: string,
-  ): Promise<Order[]> {
+  async findAll(tenantId: string): Promise<Order[]> {
     return this.prisma.order.findMany({
       where: {
         tenantId,
@@ -72,10 +64,7 @@ export class PrismaOrderRepository extends OrderRepository {
     });
   }
 
-  async update(
-    id: string,
-    data: UpdateOrderData,
-  ): Promise<Order> {
+  async update(id: string, data: UpdateOrderData): Promise<Order> {
     return this.prisma.order.update({
       where: {
         id,
@@ -90,9 +79,7 @@ export class PrismaOrderRepository extends OrderRepository {
     });
   }
 
-  async softDelete(
-    id: string,
-  ): Promise<Order> {
+  async softDelete(id: string): Promise<Order> {
     return this.prisma.order.update({
       where: {
         id,

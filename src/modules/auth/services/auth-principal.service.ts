@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { AuthUser } from '../interfaces/auth-user.interface';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
@@ -16,31 +13,20 @@ export class AuthPrincipalService {
     private readonly roleRepository: RoleRepository,
   ) {}
 
-  async build(
-    userId: string,
-  ): Promise<AuthenticatedUser> {
-    const user =
-      await this.userRepository.findById(userId);
+  async build(userId: string): Promise<AuthenticatedUser> {
+    const user = await this.userRepository.findById(userId);
 
     if (!user) {
-      throw new UnauthorizedException(
-        'User not found.',
-      );
+      throw new UnauthorizedException('User not found.');
     }
 
     this.validateUser(user);
 
     this.validateTenant(user);
 
-    const roles =
-      await this.roleRepository.getUserRoles(
-        user.id,
-      );
+    const roles = await this.roleRepository.getUserRoles(user.id);
 
-    const permissions =
-      await this.roleRepository.getUserPermissions(
-        user.id,
-      );
+    const permissions = await this.roleRepository.getUserPermissions(user.id);
 
     return {
       ...user,
@@ -49,26 +35,15 @@ export class AuthPrincipalService {
     };
   }
 
-  private validateUser(
-    user: AuthUser,
-  ): void {
+  private validateUser(user: AuthUser): void {
     if (user.status !== 'ACTIVE') {
-      throw new UnauthorizedException(
-        'User account is inactive.',
-      );
+      throw new UnauthorizedException('User account is inactive.');
     }
   }
 
-  private validateTenant(
-    user: AuthUser,
-  ): void {
-    if (
-      !user.tenant.isActive ||
-      user.tenant.isSuspended
-    ) {
-      throw new UnauthorizedException(
-        'Tenant is inactive.',
-      );
+  private validateTenant(user: AuthUser): void {
+    if (!user.tenant.isActive || user.tenant.isSuspended) {
+      throw new UnauthorizedException('Tenant is inactive.');
     }
   }
 }

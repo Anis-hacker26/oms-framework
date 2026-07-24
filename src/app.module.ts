@@ -11,9 +11,18 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
-  imports: [CommonModule, PrismaModule, TenantModule, AuthModule, UsersModule, OrdersModule],
+  imports: [
+    CommonModule,
+    PrismaModule,
+    TenantModule,
+    AuthModule,
+    UsersModule,
+    OrdersModule,
+    PaymentModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

@@ -10,42 +10,39 @@ describe('Tenant API (e2e)', () => {
   let accessToken: string;
   let tenantId: string;
 
-   // Helper for authenticated requests
+  // Helper for authenticated requests
   const auth = (req: request.Test) =>
     req.set('Authorization', `Bearer ${accessToken}`);
 
   beforeAll(async () => {
-  const moduleFixture: TestingModule =
-    await Test.createTestingModule({
+    const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
-  app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication();
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
 
-  await app.init();
+    await app.init();
 
-  const loginResponse = await request(app.getHttpServer())
-  .post('/auth/login')
-  .send({
-    email: 'admin@example.com',
-    password: 'Password@123',
-  });
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'admin@example.com',
+        password: 'Password@123',
+      });
 
-console.log('LOGIN STATUS:', loginResponse.status);
-console.log('LOGIN BODY:', JSON.stringify(loginResponse.body, null, 2));
+    console.log('LOGIN STATUS:', loginResponse.status);
+    console.log('LOGIN BODY:', JSON.stringify(loginResponse.body, null, 2));
 
-accessToken =
-  loginResponse.body.accessToken ??
-  loginResponse.body.data?.accessToken;
-
+    accessToken =
+      loginResponse.body.accessToken ?? loginResponse.body.data?.accessToken;
   });
 
   afterAll(async () => {
@@ -62,9 +59,7 @@ accessToken =
 
   describe('POST /tenants', () => {
     it('should create tenant successfully', async () => {
-      const response = await auth(
-        request(app.getHttpServer()).post('/tenants'),
-        )
+      const response = await auth(request(app.getHttpServer()).post('/tenants'))
         .send(tenant)
         .expect(201);
 
@@ -78,9 +73,7 @@ accessToken =
     });
 
     it('should reject duplicate slug', async () => {
-      await auth(
-        request(app.getHttpServer()).post('/tenants'),
-        )
+      await auth(request(app.getHttpServer()).post('/tenants'))
         .send({
           name: 'Duplicate Name',
           slug: tenant.slug,
@@ -90,9 +83,7 @@ accessToken =
     });
 
     it('should reject invalid payload', async () => {
-      await auth(
-        request(app.getHttpServer()).post('/tenants'),
-        )
+      await auth(request(app.getHttpServer()).post('/tenants'))
         .send({
           name: '',
           slug: '',
@@ -104,12 +95,11 @@ accessToken =
     it('should return standardized response', async () => {
       const response = await auth(
         request(app.getHttpServer()).post('/tenants'),
-        )
-        .send({
-          name: `Microsoft-${unique}`,
-          slug: `microsoft-${unique}`,
-          contactEmail: `admin${unique}@microsoft.com`,
-        });
+      ).send({
+        name: `Microsoft-${unique}`,
+        slug: `microsoft-${unique}`,
+        contactEmail: `admin${unique}@microsoft.com`,
+      });
 
       expect(response.body).toHaveProperty('success');
 
@@ -124,7 +114,7 @@ accessToken =
   describe('GET /tenants/:id', () => {
     it('should return tenant by id', async () => {
       const response = await auth(
-        request(app.getHttpServer()).get(`/tenants/${tenantId}`)
+        request(app.getHttpServer()).get(`/tenants/${tenantId}`),
       ).expect(200);
 
       expect(response.body.success).toBe(true);
@@ -136,19 +126,19 @@ accessToken =
 
     it('should return 404 for unknown tenant', async () => {
       await auth(
-        request(app.getHttpServer()).get('/tenants/123e4567-e89b-42d3-a456-426614174000')
+        request(app.getHttpServer()).get(
+          '/tenants/123e4567-e89b-42d3-a456-426614174000',
+        ),
       ).expect(404);
     });
 
     it('should return 400 for invalid uuid', async () => {
-      await auth(
-  request(app.getHttpServer()).get('/tenants/abc'),
-    ).expect(400);
+      await auth(request(app.getHttpServer()).get('/tenants/abc')).expect(400);
     });
 
     it('should return standardized response', async () => {
       const response = await auth(
-        request(app.getHttpServer()).get(`/tenants/${tenantId}`)
+        request(app.getHttpServer()).get(`/tenants/${tenantId}`),
       ).expect(200);
 
       expect(response.body).toHaveProperty('success');
@@ -164,7 +154,7 @@ accessToken =
   describe('GET /tenants', () => {
     it('should return paginated tenants', async () => {
       const response = await auth(
-        request(app.getHttpServer()).get('/tenants')
+        request(app.getHttpServer()).get('/tenants'),
       ).expect(200);
 
       expect(response.body.success).toBe(true);
@@ -175,89 +165,77 @@ accessToken =
     });
 
     it('should search tenants', async () => {
-      const response = await auth(
-        request(app.getHttpServer()).get('/tenants'),
-        )
-          .query({
+      const response = await auth(request(app.getHttpServer()).get('/tenants'))
+        .query({
           search: 'netflix',
-  })
-  .expect(200);
+        })
+        .expect(200);
 
       expect(response.body.success).toBe(true);
     });
 
     it('should filter ACTIVE tenants', async () => {
-      const response = await auth(
-        request(app.getHttpServer()).get('/tenants')
-      ).query({
-        status: 'ACTIVE',
-      }).expect(200);
+      const response = await auth(request(app.getHttpServer()).get('/tenants'))
+        .query({
+          status: 'ACTIVE',
+        })
+        .expect(200);
 
       expect(response.body.success).toBe(true);
     });
 
     it('should filter SUSPENDED tenants', async () => {
-      const response = await auth(
-        request(app.getHttpServer()).get('/tenants'),
-        )
-          .query({
+      const response = await auth(request(app.getHttpServer()).get('/tenants'))
+        .query({
           status: 'SUSPENDED',
-  })
-  .expect(200);
+        })
+        .expect(200);
 
       expect(response.body.success).toBe(true);
     });
 
     it('should combine search and status filter', async () => {
-      const response = await auth(
-        request(app.getHttpServer()).get('/tenants')
-      ).query({
-        search: 'netflix',
-        status: 'ACTIVE',
-      })
+      const response = await auth(request(app.getHttpServer()).get('/tenants'))
+        .query({
+          search: 'netflix',
+          status: 'ACTIVE',
+        })
         .expect(200);
 
       expect(response.body.success).toBe(true);
     });
 
     it('should reject invalid sort field', async () => {
-      await auth(
-  request(app.getHttpServer()).get('/tenants'),
-)
-  .query({
-    sortBy: 'hack',
-  })
-  .expect(400);
+      await auth(request(app.getHttpServer()).get('/tenants'))
+        .query({
+          sortBy: 'hack',
+        })
+        .expect(400);
     });
 
     it('should reject invalid page', async () => {
-      await auth(
-  request(app.getHttpServer()).get('/tenants'),
-)
-  .query({
-    page: 0,
-  })
-  .expect(400);
+      await auth(request(app.getHttpServer()).get('/tenants'))
+        .query({
+          page: 0,
+        })
+        .expect(400);
     });
 
     it('should reject invalid limit', async () => {
-      await auth(
-  request(app.getHttpServer()).get('/tenants'),
-)
-  .query({
-    limit: 0,
-  })
-  .expect(400);
+      await auth(request(app.getHttpServer()).get('/tenants'))
+        .query({
+          limit: 0,
+        })
+        .expect(400);
     });
   });
-
 
   describe('PATCH /tenants/:id', () => {
     it('should update tenant name', async () => {
       const response = await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: `Netflix Updated ${unique}`,
@@ -273,7 +251,7 @@ accessToken =
       const response = await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           slug: `netflix-updated-${unique}`,
@@ -288,7 +266,7 @@ accessToken =
       const response = await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           contactEmail: `updated${unique}@netflix.com`,
@@ -305,7 +283,7 @@ accessToken =
       const response = await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: `Netflix Global ${unique}`,
@@ -322,7 +300,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({})
         .expect(400);
@@ -332,7 +310,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: `Netflix Global ${unique}`,
@@ -344,7 +322,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch('/tenants/abc')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: 'Google',
@@ -356,7 +334,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch('/tenants/123e4567-e89b-42d3-a456-426614174000')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: 'Google',
@@ -370,7 +348,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .post('/tenants')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: duplicateName,
@@ -382,7 +360,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: duplicateName,
@@ -396,7 +374,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .post('/tenants')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: `Amazon ${unique}`,
@@ -408,7 +386,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           slug: duplicateSlug,
@@ -417,13 +395,12 @@ accessToken =
     });
   });
 
-
   describe('PATCH /tenants/:id', () => {
     it('should update tenant successfully', async () => {
       const response = await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: `Updated Netflix ${unique}`,
@@ -433,7 +410,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           slug: 'existing-slug',
@@ -447,7 +424,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .post('/tenants')
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           name: `Apple ${unique}`,
@@ -459,7 +436,7 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({
           contactEmail: duplicateEmail,
@@ -468,13 +445,12 @@ accessToken =
     });
   });
 
-
   describe('PATCH /tenants/:id/suspend', () => {
     it('should suspend tenant successfully', async () => {
       const response = await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}/suspend`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({})
         .expect(200);
@@ -488,25 +464,23 @@ accessToken =
       await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}/suspend`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({})
         .expect(400);
     });
 
     it('should reject invalid uuid', async () => {
-      await auth(
-        request(app.getHttpServer())
-          .patch('/tenants/abc/suspend')
-      )
+      await auth(request(app.getHttpServer()).patch('/tenants/abc/suspend'))
         .send({})
         .expect(400);
     });
 
     it('should return 404 for unknown tenant', async () => {
       await auth(
-        request(app.getHttpServer())
-          .patch('/tenants/123e4567-e89b-42d3-a456-426614174000/suspend')
+        request(app.getHttpServer()).patch(
+          '/tenants/123e4567-e89b-42d3-a456-426614174000/suspend',
+        ),
       )
         .send({})
         .expect(404);
@@ -518,7 +492,7 @@ accessToken =
       const response = await auth(
         request(app.getHttpServer())
           .patch(`/tenants/${tenantId}/activate`)
-          .set('Authorization', `Bearer ${accessToken}`)
+          .set('Authorization', `Bearer ${accessToken}`),
       )
         .send({})
         .expect(200);
@@ -530,26 +504,23 @@ accessToken =
 
     it('should reject already active tenant', async () => {
       await auth(
-            request(app.getHttpServer())
-            .patch(`/tenants/${tenantId}/activate`),
+        request(app.getHttpServer()).patch(`/tenants/${tenantId}/activate`),
       )
-          .send({})
-          .expect(400);
+        .send({})
+        .expect(400);
     });
 
     it('should reject invalid uuid', async () => {
-      await auth(
-      request(app.getHttpServer())
-      .patch('/tenants/abc/activate'),
-    )
-      .send({})
-      .expect(400);
+      await auth(request(app.getHttpServer()).patch('/tenants/abc/activate'))
+        .send({})
+        .expect(400);
     });
 
     it('should return 404 for unknown tenant', async () => {
       await auth(
-        request(app.getHttpServer())
-        .patch('/tenants/123e4567-e89b-42d3-a456-426614174000/activate'),
+        request(app.getHttpServer()).patch(
+          '/tenants/123e4567-e89b-42d3-a456-426614174000/activate',
+        ),
       )
         .send({})
         .expect(404);

@@ -7,18 +7,11 @@ export abstract class RefreshTokenRepository {
     expiresAt: Date,
   ): Promise<void>;
 
+  abstract findById(sessionId: string): Promise<RefreshToken | null>;
 
-abstract findById(
-  sessionId: string,
-): Promise<RefreshToken | null>;
+  abstract revoke(sessionId: string): Promise<void>;
 
-  abstract revoke(
-    sessionId: string,
-  ): Promise<void>;
-
-  abstract revokeAll(
-    userId: string,
-  ): Promise<void>;
+  abstract revokeAll(userId: string): Promise<void>;
 
   abstract deleteExpired(): Promise<void>;
 }

@@ -3,9 +3,7 @@ import { Order } from '@prisma/client';
 import { OrderResponse } from '../interfaces/order-response.interface';
 
 export class OrderMapper {
-  static toResponse(
-    order: Order,
-  ): OrderResponse {
+  static toResponse(order: Order): OrderResponse {
     return {
       id: order.id,
       tenantId: order.tenantId,
@@ -21,11 +19,7 @@ export class OrderMapper {
     };
   }
 
-  static toResponseList(
-    orders: Order[],
-  ): OrderResponse[] {
-    return orders.map((order) =>
-      OrderMapper.toResponse(order),
-    );
+  static toResponseList(orders: Order[]): OrderResponse[] {
+    return orders.map((order) => OrderMapper.toResponse(order));
   }
 }

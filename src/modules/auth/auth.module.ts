@@ -38,33 +38,29 @@ import { PrismaRefreshTokenRepository } from './repositories/prisma-refresh-toke
     }),
   ],
 
-  controllers: [
-    AuthController,
-  ],
+  controllers: [AuthController],
 
- providers: [
-  AuthService,
-  TokenService,
-  JwtStrategy,
-
-  {
-    provide: UserRepository,
-    useClass: PrismaUserRepository,
-  },
-
-  {
-    provide: RefreshTokenRepository,
-    useClass: PrismaRefreshTokenRepository,
-  },
-
-  {
-    provide: RoleRepository,
-    useClass: PrismaRoleRepository,
-  },
-],
-
-  exports: [
+  providers: [
     AuthService,
+    TokenService,
+    JwtStrategy,
+
+    {
+      provide: UserRepository,
+      useClass: PrismaUserRepository,
+    },
+
+    {
+      provide: RefreshTokenRepository,
+      useClass: PrismaRefreshTokenRepository,
+    },
+
+    {
+      provide: RoleRepository,
+      useClass: PrismaRoleRepository,
+    },
   ],
+
+  exports: [AuthService],
 })
 export class AuthModule {}

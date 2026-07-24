@@ -47,9 +47,7 @@ import { OrdersService } from '../services/orders.service';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(
-    private readonly ordersService: OrdersService,
-  ) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
   @Permissions(Permission.ORDER_CREATE)
   @Post()
@@ -79,10 +77,7 @@ export class OrdersController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() createOrderDto: CreateOrderDto,
   ): Promise<OrderResponseDto> {
-    return this.ordersService.create(
-      user,
-      createOrderDto,
-    );
+    return this.ordersService.create(user, createOrderDto);
   }
 
   @Permissions(Permission.ORDER_READ)
@@ -90,8 +85,7 @@ export class OrdersController {
   @SuccessMessage(OrderMessages.LISTED)
   @ApiOperation({
     summary: 'List Orders',
-    description:
-      'Returns all orders belonging to the authenticated tenant.',
+    description: 'Returns all orders belonging to the authenticated tenant.',
   })
   @ApiOkResponse({
     description: OrderMessages.LISTED,
@@ -176,11 +170,7 @@ export class OrdersController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() updateOrderDto: UpdateOrderDto,
   ): Promise<OrderResponseDto> {
-    return this.ordersService.update(
-      id,
-      user,
-      updateOrderDto,
-    );
+    return this.ordersService.update(id, user, updateOrderDto);
   }
 
   @Permissions(Permission.ORDER_DELETE)

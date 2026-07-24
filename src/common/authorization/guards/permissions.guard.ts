@@ -15,9 +15,10 @@ export class PermissionsGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredPermissions = this.reflector.getAllAndOverride<
-      Permission[]
-    >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
+    const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(
+      PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     // Route does not require any permissions.
     if (!requiredPermissions || requiredPermissions.length === 0) {
@@ -36,10 +37,8 @@ export class PermissionsGuard implements CanActivate {
     }
 
     if (!Array.isArray(user.permissions)) {
-  throw new ForbiddenException(
-    'User permissions are unavailable.',
-  );
-}
+      throw new ForbiddenException('User permissions are unavailable.');
+    }
 
     const hasPermission = requiredPermissions.every((permission) =>
       user.permissions.includes(permission),

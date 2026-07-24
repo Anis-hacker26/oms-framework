@@ -22,9 +22,7 @@ export class TokenService {
     });
   }
 
-  async generateRefreshToken(
-    payload: RefreshTokenPayload,
-  ): Promise<string> {
+  async generateRefreshToken(payload: RefreshTokenPayload): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       expiresIn: this.configService.getOrThrow<string>(
@@ -33,23 +31,19 @@ export class TokenService {
     });
   }
 
-  async verifyRefreshToken(
-  token: string,
-): Promise<RefreshTokenPayload> {
-  return this.jwtService.verifyAsync<
-    RefreshTokenPayload & JwtPayload
-  >(token, {
-    secret: this.configService.getOrThrow<string>(
-      'JWT_REFRESH_SECRET',
-    ),
-  });
-}
+  async verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
+    return this.jwtService.verifyAsync<RefreshTokenPayload & JwtPayload>(
+      token,
+      {
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      },
+    );
+  }
 
-    getRefreshTokenExpiryDate(): Date {
-    const refreshTokenExpiresIn =
-      this.configService.getOrThrow<string>(
-        'JWT_REFRESH_EXPIRES_IN',
-      );
+  getRefreshTokenExpiryDate(): Date {
+    const refreshTokenExpiresIn = this.configService.getOrThrow<string>(
+      'JWT_REFRESH_EXPIRES_IN',
+    );
 
     const expiresAt = new Date();
 

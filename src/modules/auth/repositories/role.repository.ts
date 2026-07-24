@@ -11,15 +11,11 @@ export abstract class RoleRepository {
   /**
    * Returns all role names assigned to the user.
    */
-  abstract getUserRoles(
-    userId: string,
-  ): Promise<string[]>;
+  abstract getUserRoles(userId: string): Promise<string[]>;
 
   /**
    * Returns all effective permissions assigned
    * to the user through their roles.
    */
-  abstract getUserPermissions(
-    userId: string,
-  ): Promise<string[]>;
+  abstract getUserPermissions(userId: string): Promise<string[]>;
 }

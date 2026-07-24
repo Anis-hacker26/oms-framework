@@ -18,20 +18,17 @@ describe('OrdersService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    const module: TestingModule =
-      await Test.createTestingModule({
-        providers: [
-          OrdersService,
-          {
-            provide: OrderRepository,
-            useValue: mockOrderRepository,
-          },
-        ],
-      }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        OrdersService,
+        {
+          provide: OrderRepository,
+          useValue: mockOrderRepository,
+        },
+      ],
+    }).compile();
 
-    service = module.get<OrdersService>(
-      OrdersService,
-    );
+    service = module.get<OrdersService>(OrdersService);
   });
 
   it('should be defined', () => {

@@ -21,9 +21,6 @@ import { PrismaOrderRepository } from './repositories/prisma-order.repository';
     },
   ],
 
-  exports: [
-    OrdersService,
-    OrderRepository,
-  ],
+  exports: [OrdersService, OrderRepository],
 })
 export class OrdersModule {}

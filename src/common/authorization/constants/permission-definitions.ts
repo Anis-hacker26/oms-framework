@@ -137,6 +137,14 @@ export const PERMISSION_DEFINITIONS = {
       name: Permission.PAYMENT_REFUND,
       description: 'Refund payments',
     },
+    {
+      name: Permission.PAYMENT_UPDATE,
+      description: 'Update payments.',
+    },
+    {
+      name: Permission.PAYMENT_DELETE,
+      description: 'Delete payments.',
+    },
   ],
 
   notification: [

@@ -25,6 +25,26 @@ enum OrderStatus {
   ARCHIVED
 }
 
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  UPI
+  BANK_TRANSFER
+  NET_BANKING
+  WALLET
+  CASH
+  OTHER
+}
+
 model Tenant {
   // =====================================================
   // Primary Key
@@ -73,9 +93,10 @@ model Tenant {
   // Relationships
   // =====================================================
 
-  users  User[]
-  roles  Role[]
-  orders Order[]
+  users    User[]
+  roles    Role[]
+  orders   Order[]
+  payments Payment[]
 
   @@index([name])
   @@index([contactEmail])
@@ -143,6 +164,10 @@ model User {
   createdOrders Order[] @relation("CreatedOrders")
 
   updatedOrders Order[] @relation("UpdatedOrders")
+
+  createdPayments Payment[] @relation("CreatedPayments")
+
+  updatedPayments Payment[] @relation("UpdatedPayments")
 
   // =====================================================
   // Indexes
@@ -406,6 +431,12 @@ model Order {
   updatedBy User? @relation("UpdatedOrders", fields: [updatedById], references: [id])
 
   // =====================================================
+  // Payment Relationships
+  // =====================================================
+
+  payments Payment[]
+
+  // =====================================================
   // Optimistic Locking
   // =====================================================
 
@@ -431,6 +462,96 @@ model Order {
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId])
+  @@index([status])
+  @@index([createdById])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+model Payment {
+  // =====================================================
+  // Primary Key
+  // =====================================================
+
+  id String @id @default(uuid())
+
+  // =====================================================
+  // Tenant Relationship
+  // =====================================================
+
+  tenantId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  // =====================================================
+  // Order Relationship
+  // =====================================================
+
+  orderId String
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  // =====================================================
+  // Payment Information
+  // =====================================================
+
+  paymentReference String @db.VarChar(100)
+
+  provider String @db.VarChar(100)
+
+  method PaymentMethod
+
+  currency String @db.VarChar(10)
+
+  amount Decimal @db.Decimal(18, 2)
+
+  status PaymentStatus @default(PENDING)
+
+  gatewayTransactionId String? @db.VarChar(255)
+
+  failureReason String? @db.VarChar(500)
+
+  metadata Json?
+
+  // =====================================================
+  // Audit Relationships
+  // =====================================================
+
+  createdById String
+
+  createdBy User @relation("CreatedPayments", fields: [createdById], references: [id])
+
+  updatedById String?
+
+  updatedBy User? @relation("UpdatedPayments", fields: [updatedById], references: [id])
+
+  // =====================================================
+  // Optimistic Locking
+  // =====================================================
+
+  version Int @default(1)
+
+  // =====================================================
+  // Soft Delete
+  // =====================================================
+
+  deletedAt DateTime?
+
+  // =====================================================
+  // Audit Fields
+  // =====================================================
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  // =====================================================
+  // Constraints
+  // =====================================================
+
+  @@unique([tenantId, paymentReference])
+  @@index([tenantId])
+  @@index([orderId])
   @@index([status])
   @@index([createdById])
   @@index([deletedAt])

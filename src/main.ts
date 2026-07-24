@@ -15,24 +15,24 @@ async function bootstrap() {
     }),
   );
 
- const config = new DocumentBuilder()
-  .setTitle('OMS Framework API')
-  .setDescription(
-    'Enterprise Order Management System Framework API Documentation',
-  )
-  .setVersion('1.0.0')
-  .addTag('Tenants')
-  .addTag('Authentication')
-  .addBearerAuth(
-    {
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-      description: 'Enter JWT access token',
-    },
-    'access-token',
-  )
-  .build();
+  const config = new DocumentBuilder()
+    .setTitle('OMS Framework API')
+    .setDescription(
+      'Enterprise Order Management System Framework API Documentation',
+    )
+    .setVersion('1.0.0')
+    .addTag('Tenants')
+    .addTag('Authentication')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Enter JWT access token',
+      },
+      'access-token',
+    )
+    .build();
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('api', app, document);

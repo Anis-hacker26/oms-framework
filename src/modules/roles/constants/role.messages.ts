@@ -18,22 +18,16 @@ export const RoleMessages = {
   ROLE_NOT_ASSIGNED: 'Role is not assigned to the user.',
 
   ROLE_RETRIEVED: 'Role retrieved successfully.',
-ROLE_LIST_RETRIEVED: 'Roles retrieved successfully.',
+  ROLE_LIST_RETRIEVED: 'Roles retrieved successfully.',
 
-  PERMISSION_ALREADY_ASSIGNED:
-    'Permission is already assigned to the role.',
-  PERMISSION_NOT_ASSIGNED:
-    'Permission is not assigned to the role.',
+  PERMISSION_ALREADY_ASSIGNED: 'Permission is already assigned to the role.',
+  PERMISSION_NOT_ASSIGNED: 'Permission is not assigned to the role.',
 
-  SYSTEM_ROLE_PROTECTED:
-    'System roles cannot be modified or deleted.',
+  SYSTEM_ROLE_PROTECTED: 'System roles cannot be modified or deleted.',
 
-  CUSTOM_ROLE_ONLY:
-    'This operation is allowed only for custom roles.',
+  CUSTOM_ROLE_ONLY: 'This operation is allowed only for custom roles.',
 
-  INVALID_PERMISSION:
-    'Invalid permission.',
+  INVALID_PERMISSION: 'Invalid permission.',
 
-  INVALID_ROLE:
-    'Invalid role.',
+  INVALID_ROLE: 'Invalid role.',
 } as const;

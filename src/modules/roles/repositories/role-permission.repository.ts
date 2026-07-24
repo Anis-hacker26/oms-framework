@@ -11,7 +11,5 @@ export abstract class RolePermissionRepository {
     permissionId: string,
   ): Promise<RolePermission>;
 
-  abstract getRolePermissions(
-    roleId: string,
-  ): Promise<Permission[]>;
+  abstract getRolePermissions(roleId: string): Promise<Permission[]>;
 }
