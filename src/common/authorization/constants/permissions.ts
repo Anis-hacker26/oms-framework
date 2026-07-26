@@ -57,8 +57,10 @@ export const PaymentPermissions = {
 } as const;
 
 export const NotificationPermissions = {
-  SEND: Permission.NOTIFICATION_SEND,
+  CREATE: Permission.NOTIFICATION_CREATE,
   READ: Permission.NOTIFICATION_READ,
+  UPDATE: Permission.NOTIFICATION_UPDATE,
+  DELETE: Permission.NOTIFICATION_DELETE,
 } as const;
 
 export const AuditPermissions = {

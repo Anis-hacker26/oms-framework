@@ -78,8 +78,10 @@ export enum Permission {
   // ---------------------------------------------------------------------------
   // Notification Permissions
   // ---------------------------------------------------------------------------
-  NOTIFICATION_SEND = 'notification:send',
+  NOTIFICATION_CREATE = 'notification:create',
   NOTIFICATION_READ = 'notification:read',
+  NOTIFICATION_UPDATE = 'notification:update',
+  NOTIFICATION_DELETE = 'notification:delete',
 
   // ---------------------------------------------------------------------------
   // Audit Permissions

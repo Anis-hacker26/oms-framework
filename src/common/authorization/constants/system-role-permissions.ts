@@ -45,7 +45,7 @@ export const SYSTEM_ROLE_PERMISSIONS = {
     Permission.PAYMENT_REFUND,
 
     // Notifications
-    Permission.NOTIFICATION_SEND,
+    Permission.NOTIFICATION_CREATE,
     Permission.NOTIFICATION_READ,
 
     // Audit

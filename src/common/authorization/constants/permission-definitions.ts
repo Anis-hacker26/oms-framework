@@ -149,8 +149,8 @@ export const PERMISSION_DEFINITIONS = {
 
   notification: [
     {
-      name: Permission.NOTIFICATION_SEND,
-      description: 'Send notifications',
+      name: Permission.NOTIFICATION_CREATE,
+      description: 'Create notifications',
     },
     {
       name: Permission.NOTIFICATION_READ,

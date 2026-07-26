@@ -45,6 +45,30 @@ enum PaymentMethod {
   OTHER
 }
 
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  ARCHIVED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  SYSTEM
+}
+
 model Tenant {
   // =====================================================
   // Primary Key
@@ -93,10 +117,11 @@ model Tenant {
   // Relationships
   // =====================================================
 
-  users    User[]
-  roles    Role[]
-  orders   Order[]
-  payments Payment[]
+  users         User[]
+  roles         Role[]
+  orders        Order[]
+  payments      Payment[]
+  notifications Notification[]
 
   @@index([name])
   @@index([contactEmail])
@@ -161,6 +186,8 @@ model User {
 
   roles UserRole[]
 
+  notifications Notification[]
+
   createdOrders Order[] @relation("CreatedOrders")
 
   updatedOrders Order[] @relation("UpdatedOrders")
@@ -168,6 +195,9 @@ model User {
   createdPayments Payment[] @relation("CreatedPayments")
 
   updatedPayments Payment[] @relation("UpdatedPayments")
+
+  createdNotifications Notification[] @relation("NotificationCreatedBy")
+  updatedNotifications Notification[] @relation("NotificationUpdatedBy")
 
   // =====================================================
   // Indexes
@@ -555,5 +585,52 @@ model Payment {
   @@index([status])
   @@index([createdById])
   @@index([deletedAt])
+  @@index([createdAt])
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  // Multi-tenancy
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  // Recipient
+  recipientId String
+  recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Restrict)
+
+  // Notification Content
+  title   String @db.VarChar(255)
+  message String
+
+  // Notification Metadata
+  type    NotificationType
+  channel NotificationChannel
+  status  NotificationStatus  @default(PENDING)
+
+  metadata Json?
+
+  // Read / Archive
+  readAt     DateTime?
+  archivedAt DateTime?
+
+  // Audit Fields
+  createdById String?
+  createdBy   User?   @relation("NotificationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  updatedById String?
+  updatedBy   User?   @relation("NotificationUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Optimistic Locking
+  version Int @default(1)
+
+  @@index([tenantId])
+  @@index([recipientId])
+  @@index([status])
+  @@index([channel])
+  @@index([type])
   @@index([createdAt])
 }
