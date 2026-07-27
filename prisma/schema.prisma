@@ -69,6 +69,47 @@ enum NotificationType {
   SYSTEM
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+
+  ACTIVATE
+  SUSPEND
+
+  ASSIGN_ROLE
+  REMOVE_ROLE
+
+  PASSWORD_CHANGE
+
+  CREATE_ORDER
+  UPDATE_ORDER
+  CANCEL_ORDER
+
+  PAYMENT_INITIATED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
+
+  NOTIFICATION_SENT
+  NOTIFICATION_FAILED
+
+  EXPORT
+
+  CUSTOM
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
 model Tenant {
   // =====================================================
   // Primary Key
@@ -122,8 +163,10 @@ model Tenant {
   orders        Order[]
   payments      Payment[]
   notifications Notification[]
+  auditLogs     AuditLog[]
 
   @@index([name])
+  @@index([deletedAt])
   @@index([contactEmail])
 }
 
@@ -196,6 +239,8 @@ model User {
 
   updatedPayments Payment[] @relation("UpdatedPayments")
 
+  auditLogs AuditLog[]
+
   createdNotifications Notification[] @relation("NotificationCreatedBy")
   updatedNotifications Notification[] @relation("NotificationUpdatedBy")
 
@@ -204,6 +249,7 @@ model User {
   // =====================================================
 
   @@index([tenantId])
+  @@index([deletedAt])
   @@index([email])
 }
 
@@ -633,4 +679,43 @@ model Notification {
   @@index([channel])
   @@index([type])
   @@index([createdAt])
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action     AuditAction
+  entityType String
+  entityId   String?
+
+  description String
+
+  severity AuditSeverity @default(INFO)
+
+  ipAddress String?
+  userAgent String?
+
+  requestId     String?
+  correlationId String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action])
+  @@index([severity])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+  @@index([requestId])
+  @@index([correlationId])
+  @@map("audit_logs")
 }

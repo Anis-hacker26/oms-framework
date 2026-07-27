@@ -13,6 +13,7 @@ import { ApiResponseInterceptor } from './common/interceptors/api-response.inter
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     OrdersModule,
     PaymentModule,
     NotificationModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [

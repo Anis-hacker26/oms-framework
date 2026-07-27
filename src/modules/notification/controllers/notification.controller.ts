@@ -161,7 +161,7 @@ export class NotificationController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: MarkNotificationReadDto,
   ): Promise<NotificationResponseDto> {
-    return this.notificationService.markAsRead(id, dto.version);
+    return this.notificationService.markAsRead(id);
   }
 
   @Permissions(Permission.NOTIFICATION_DELETE)
