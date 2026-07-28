@@ -4,14 +4,15 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
+import { RedisService } from 'src/modules/redis/services/redis.service';
 
 @Injectable()
 export class QueueRegistry implements OnModuleDestroy {
   private readonly queues = new Map<string, Queue>();
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {}
+ constructor(
+  private readonly redisService: RedisService,
+) {}
 
   getQueue(queueName: string): Queue {
     const existingQueue = this.queues.get(queueName);
@@ -20,15 +21,9 @@ export class QueueRegistry implements OnModuleDestroy {
       return existingQueue;
     }
 
-    const queue = new Queue(queueName, {
-      connection: {
-        host: this.configService.getOrThrow<string>('REDIS_HOST'),
-        port: this.configService.getOrThrow<number>('REDIS_PORT'),
-        password: this.configService.get<string>('REDIS_PASSWORD'),
-        username: this.configService.get<string>('REDIS_USERNAME'),
-        db: this.configService.get<number>('REDIS_DB') ?? 0,
-      },
-    });
+   const queue = new Queue(queueName, {
+  connection: this.redisService.getClient(),
+});
 
     this.queues.set(queueName, queue);
 

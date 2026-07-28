@@ -4,8 +4,12 @@ import { QUEUE_PROVIDER } from './constants/queue.tokens';
 import { BullMqProvider } from './providers/bullmq.provider';
 import { QueueRegistry } from './registry/queue.registry';
 import { QueueService } from './services/queue.service';
+import { RedisModule } from '../redis';
 
 @Module({
+    imports: [
+    RedisModule,
+  ],
   providers: [
     QueueRegistry,
     BullMqProvider,
