@@ -1,0 +1,11 @@
+export const DEFAULT_QUEUE_NAME = 'default';
+
+export const DEFAULT_JOB_ATTEMPTS = 3;
+
+export const DEFAULT_JOB_BACKOFF_DELAY = 1000;
+
+export const DEFAULT_JOB_REMOVE_ON_COMPLETE = 100;
+
+export const DEFAULT_JOB_REMOVE_ON_FAIL = 1000;
+
+export const QUEUE_PROVIDER = 'QUEUE_PROVIDER';

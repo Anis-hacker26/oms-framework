@@ -1,0 +1,1 @@
+export const QUEUE_PROVIDER = Symbol('QUEUE_PROVIDER');
