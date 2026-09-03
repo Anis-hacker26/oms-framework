@@ -16,6 +16,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { EventModule } from './modules/event/event.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
     PaymentModule,
     NotificationModule,
     AuditModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [
