@@ -17,6 +17,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { EventModule } from './modules/event/event.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { ConfigModule } from './modules/config/config.module';
 
 @Module({
   imports: [

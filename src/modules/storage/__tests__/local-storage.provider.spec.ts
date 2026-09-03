@@ -10,38 +10,45 @@ import {
   join,
 } from 'node:path';
 
+import {
+  AppConfigService,
+} from '../../config/services/app-config.service';
+
 import { LocalStorageProvider } from '../providers/local-storage.provider';
 
 describe('LocalStorageProvider', () => {
   let provider: LocalStorageProvider;
   let testDirectory: string;
 
-  beforeEach(async () => {
-    testDirectory = await mkdtemp(
-      join(
-        tmpdir(),
-        'oms-storage-test-',
-      ),
+beforeEach(async () => {
+  testDirectory = await mkdtemp(
+    join(
+      tmpdir(),
+      'oms-storage-test-',
+    ),
+  );
+
+  const configService = {
+    storage: {
+      localRoot: testDirectory,
+    },
+  } as AppConfigService;
+
+  provider =
+    new LocalStorageProvider(
+      configService,
     );
+});
 
-    process.env.STORAGE_LOCAL_ROOT =
-      testDirectory;
-
-    provider =
-      new LocalStorageProvider();
-  });
-
-  afterEach(async () => {
-    delete process.env.STORAGE_LOCAL_ROOT;
-
-    await rm(
-      testDirectory,
-      {
-        recursive: true,
-        force: true,
-      },
-    );
-  });
+afterEach(async () => {
+  await rm(
+    testDirectory,
+    {
+      recursive: true,
+      force: true,
+    },
+  );
+});
 
   it('should upload a file', async () => {
     const content =

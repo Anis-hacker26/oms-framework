@@ -16,15 +16,23 @@ import type {
   UploadFileInput,
 } from '../interfaces/storage.interface';
 
+import {
+  AppConfigService,
+} from '../../config/services/app-config.service';
+
 @Injectable()
 export class LocalStorageProvider
   implements Storage
 {
-  private readonly rootDirectory =
-    resolve(
-      process.env.STORAGE_LOCAL_ROOT ??
-        './storage',
+  constructor(
+    private readonly configService: AppConfigService,
+  ) {}
+
+  private get rootDirectory(): string {
+    return resolve(
+      this.configService.storage.localRoot,
     );
+  }
 
   async upload(
     input: UploadFileInput,
