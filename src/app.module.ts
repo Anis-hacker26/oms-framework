@@ -15,6 +15,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { EventModule } from './modules/event/event.module';
+import { SchedulerModule } from './modules/scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { EventModule } from './modules/event/event.module';
     TenantModule,
     AuthModule,
     UsersModule,
+    SchedulerModule,
     OrdersModule,
     PaymentModule,
     NotificationModule,
