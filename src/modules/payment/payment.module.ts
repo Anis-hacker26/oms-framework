@@ -5,8 +5,11 @@ import { PaymentMapper } from './mappers/payment.mapper';
 import { PaymentRepository } from './repositories/payment.repository';
 import { PrismaPaymentRepository } from './repositories/prisma-payment.repository';
 import { PaymentService } from './services/payment.service';
+import { EventModule } from '../event/event.module';
 
 @Module({
+  imports: [EventModule],
+
   controllers: [PaymentController],
   providers: [
     PaymentService,

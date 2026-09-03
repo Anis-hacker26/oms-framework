@@ -2,13 +2,17 @@ import { Module } from '@nestjs/common';
 
 import { TenantModule } from '../tenant/tenant.module';
 import { UsersController } from './controllers/users.controller';
+import { EventModule } from '../event/event.module';
 
 import { USER_REPOSITORY } from './constants/user.constants';
 import { UserPrismaRepository } from './repositories/user-prisma.repository';
 import { UsersService } from './services/users.service';
 
 @Module({
-  imports: [TenantModule],
+  imports: [
+  TenantModule,
+  EventModule,
+],
   controllers: [UsersController],
   providers: [
     {

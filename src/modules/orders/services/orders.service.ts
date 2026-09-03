@@ -10,10 +10,15 @@ import { UpdateOrderData } from '../interfaces/update-order-data.interface';
 import { OrderMapper } from '../mappers/order.mapper';
 import { OrderRepository } from '../repositories/order.repository';
 import { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
+import { EventService } from '../../event/services/event.service';
+import { OrderCreatedEvent } from '../../event/events/order-created.event';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly orderRepository: OrderRepository) {}
+  constructor(
+  private readonly orderRepository: OrderRepository,
+  private readonly eventService: EventService,
+) {}
 
   async create(
     user: AuthenticatedUser,
@@ -29,9 +34,25 @@ export class OrdersService {
       version: 1,
     };
 
-    const order = await this.orderRepository.create(orderData);
+const order = await this.orderRepository.create(orderData);
 
-    return OrderMapper.toResponse(order);
+await this.eventService.publish(
+  new OrderCreatedEvent(
+    {
+      orderId: order.id,
+      tenantId: order.tenantId,
+      orderNumber: order.orderNumber,
+      title: order.title,
+      status: order.status,
+      createdById: order.createdById,
+    },
+    {
+      tenantId: order.tenantId,
+    },
+  ),
+);
+
+return OrderMapper.toResponse(order);
   }
 
   async findById(id: string): Promise<OrderResponse> {

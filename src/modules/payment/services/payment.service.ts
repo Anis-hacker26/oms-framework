@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PaymentStatus } from '@prisma/client';
 
+import { EventService } from '../../event/services/event.service';
+import { PaymentSucceededEvent } from '../../event/events/payment-succeeded.event';
 import { PaymentMessages } from '../constants/payment.messages';
 import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { UpdatePaymentDto } from '../dto/update-payment.dto';
@@ -13,7 +16,10 @@ import { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.inte
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly paymentRepository: PaymentRepository) {}
+constructor(
+  private readonly paymentRepository: PaymentRepository,
+  private readonly eventService: EventService,
+) {}
   async create(
     user: AuthenticatedUser,
     createPaymentDto: CreatePaymentDto,
@@ -65,6 +71,7 @@ export class PaymentService {
       method: updatePaymentDto.method,
       currency: updatePaymentDto.currency,
       amount: updatePaymentDto.amount,
+      status: updatePaymentDto.status,
       gatewayTransactionId: updatePaymentDto.gatewayTransactionId ?? null,
       failureReason: undefined,
       metadata: updatePaymentDto.metadata ?? null,
@@ -72,9 +79,38 @@ export class PaymentService {
       version: existingPayment.version + 1,
     };
 
-    const updatedPayment = await this.paymentRepository.update(id, updateData);
+const updatedPayment = await this.paymentRepository.update(
+  id,
+  updateData,
+);
 
-    return PaymentMapper.toResponse(updatedPayment);
+if (
+  existingPayment.status !== PaymentStatus.COMPLETED &&
+  updatedPayment.status === PaymentStatus.COMPLETED
+) {
+  await this.eventService.publish(
+    new PaymentSucceededEvent(
+      {
+        paymentId: updatedPayment.id,
+        tenantId: updatedPayment.tenantId,
+        orderId: updatedPayment.orderId,
+        paymentReference: updatedPayment.paymentReference,
+        provider: updatedPayment.provider,
+        method: updatedPayment.method,
+        currency: updatedPayment.currency,
+        amount: Number(updatedPayment.amount),
+        status: updatedPayment.status,
+        gatewayTransactionId:
+          updatedPayment.gatewayTransactionId,
+      },
+      {
+        tenantId: updatedPayment.tenantId,
+      },
+    ),
+  );
+}
+
+return PaymentMapper.toResponse(updatedPayment);
   }
   async delete(id: string): Promise<PaymentResponse> {
     const existingPayment = await this.paymentRepository.findById(id);

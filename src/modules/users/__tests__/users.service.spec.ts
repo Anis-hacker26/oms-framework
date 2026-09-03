@@ -9,6 +9,7 @@ import { UserStatus } from '@prisma/client';
 import { PasswordUtil } from '../../auth/utils/password.util';
 import { TENANT_REPOSITORY } from '../../tenant/constants/tenant.constants';
 import { TenantRepository } from '../../tenant/interfaces/tenant.repository';
+import { EventService } from '../../event/services/event.service';
 
 import { USER_REPOSITORY } from '../constants/user.constants';
 import { UserMessages } from '../constants/user.messages';
@@ -25,6 +26,7 @@ describe('UsersService', () => {
   let service: UsersService;
   let userRepository: jest.Mocked<UserRepository>;
   let tenantRepository: jest.Mocked<TenantRepository>;
+  let eventService: jest.Mocked<EventService>;
 
   const tenantId = '550e8400-e29b-41d4-a716-446655440001';
 
@@ -67,38 +69,50 @@ describe('UsersService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UsersService,
-        {
-          provide: USER_REPOSITORY,
-          useValue: {
-            create: jest.fn(),
-            findById: jest.fn(),
-            findByEmail: jest.fn(),
-            findAll: jest.fn(),
-            update: jest.fn(),
-            updateStatus: jest.fn(),
-          },
-        },
-        {
-          provide: TENANT_REPOSITORY,
-          useValue: {
-            create: jest.fn(),
-            update: jest.fn(),
-            suspend: jest.fn(),
-            activate: jest.fn(),
-            findById: jest.fn(),
-            findAll: jest.fn(),
-            findBySlug: jest.fn(),
-            findByName: jest.fn(),
-            findByContactEmail: jest.fn(),
-          },
-        },
-      ],
+  UsersService,
+
+  {
+    provide: USER_REPOSITORY,
+    useValue: {
+      create: jest.fn(),
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      findAll: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+    },
+  },
+
+  {
+    provide: TENANT_REPOSITORY,
+    useValue: {
+      create: jest.fn(),
+      update: jest.fn(),
+      suspend: jest.fn(),
+      activate: jest.fn(),
+      findById: jest.fn(),
+      findAll: jest.fn(),
+      findBySlug: jest.fn(),
+      findByName: jest.fn(),
+      findByContactEmail: jest.fn(),
+    },
+  },
+
+  {
+    provide: EventService,
+    useValue: {
+      publish: jest.fn(),
+      subscribe: jest.fn(),
+      unsubscribe: jest.fn(),
+    },
+  },
+],
     }).compile();
 
-    service = module.get<UsersService>(UsersService);
-    userRepository = module.get(USER_REPOSITORY);
-    tenantRepository = module.get(TENANT_REPOSITORY);
+service = module.get<UsersService>(UsersService);
+userRepository = module.get(USER_REPOSITORY);
+tenantRepository = module.get(TENANT_REPOSITORY);
+eventService = module.get(EventService);
   });
 
   afterEach(() => {
@@ -109,44 +123,76 @@ describe('UsersService', () => {
   // Create User
   // =========================================
 
-  describe('create', () => {
-    it('should create a user successfully', async () => {
-      tenantRepository.findById.mockResolvedValue(tenant);
-      userRepository.findByEmail.mockResolvedValue(null);
-      userRepository.create.mockResolvedValue(user);
+describe('create', () => {
+  it('should create a user successfully', async () => {
+    tenantRepository.findById.mockResolvedValue(tenant);
+    userRepository.findByEmail.mockResolvedValue(null);
+    userRepository.create.mockResolvedValue(user);
 
-      jest.spyOn(PasswordUtil, 'hash').mockResolvedValue('hashed-password');
+    jest.spyOn(PasswordUtil, 'hash').mockResolvedValue('hashed-password');
 
-      const result = await service.create(createUserDto);
+    const result = await service.create(createUserDto);
 
-      expect(tenantRepository.findById).toHaveBeenCalledWith(tenantId);
-      expect(userRepository.findByEmail).toHaveBeenCalledWith(
-        createUserDto.email,
-      );
-      expect(PasswordUtil.hash).toHaveBeenCalledWith(createUserDto.password);
+    expect(tenantRepository.findById).toHaveBeenCalledWith(tenantId);
 
-      expect(userRepository.create).toHaveBeenCalledWith({
-        tenantId,
-        email: createUserDto.email,
-        passwordHash: 'hashed-password',
-        firstName: createUserDto.firstName,
-        lastName: createUserDto.lastName,
-      } satisfies CreateUserData);
+    expect(userRepository.findByEmail).toHaveBeenCalledWith(
+      createUserDto.email,
+    );
 
-      expect(result).toEqual({
-        id: user.id,
+    expect(PasswordUtil.hash).toHaveBeenCalledWith(
+      createUserDto.password,
+    );
+
+    expect(userRepository.create).toHaveBeenCalledWith({
+      tenantId,
+      email: createUserDto.email,
+      passwordHash: 'hashed-password',
+      firstName: createUserDto.firstName,
+      lastName: createUserDto.lastName,
+    } satisfies CreateUserData);
+
+    expect(eventService.publish).toHaveBeenCalledTimes(1);
+
+    expect(eventService.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: 'user.registered',
+        payload: {
+          userId: user.id,
+          tenantId: user.tenantId,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          status: user.status,
+        },
         tenantId: user.tenantId,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        status: user.status,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      });
+      }),
+    );
 
-      expect(result).not.toHaveProperty('passwordHash');
-      expect(result).not.toHaveProperty('deletedAt');
+    const publishedEvent =
+      eventService.publish.mock.calls[0][0];
+
+    expect(publishedEvent.payload).not.toHaveProperty(
+      'passwordHash',
+    );
+
+    expect(publishedEvent.payload).not.toHaveProperty(
+      'password',
+    );
+
+    expect(result).toEqual({
+      id: user.id,
+      tenantId: user.tenantId,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     });
+
+    expect(result).not.toHaveProperty('passwordHash');
+    expect(result).not.toHaveProperty('deletedAt');
+  });
 
     it('should throw NotFoundException when tenant does not exist', async () => {
       tenantRepository.findById.mockResolvedValue(null);

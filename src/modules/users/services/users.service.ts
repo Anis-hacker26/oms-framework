@@ -12,6 +12,8 @@ import { TENANT_REPOSITORY } from '../../tenant/constants/tenant.constants';
 import { TenantRepository } from '../../tenant/interfaces/tenant.repository';
 import { USER_SORTABLE_FIELDS } from '../constants/user-sortable-fields';
 import { UserQueryDto } from '../dto/user-query.dto';
+import { UserRegisteredEvent } from '../../event/events/user-registered.event';
+import { EventService } from '../../event/services/event.service';
 
 import { PageDto } from '../../../common/pagination/dto/page.dto';
 import { PageMetaDto } from '../../../common/pagination/dto/page-meta.dto';
@@ -25,13 +27,15 @@ import { UserMapper } from '../mappers/user.mapper';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @Inject(USER_REPOSITORY)
-    private readonly userRepository: UserRepository,
+constructor(
+  @Inject(USER_REPOSITORY)
+  private readonly userRepository: UserRepository,
 
-    @Inject(TENANT_REPOSITORY)
-    private readonly tenantRepository: TenantRepository,
-  ) {}
+  @Inject(TENANT_REPOSITORY)
+  private readonly tenantRepository: TenantRepository,
+
+  private readonly eventService: EventService,
+) {}
 
   // =========================================
   // Public Methods
@@ -63,6 +67,22 @@ export class UsersService {
       firstName: data.firstName,
       lastName: data.lastName,
     });
+
+    await this.eventService.publish(
+      new UserRegisteredEvent(
+        {
+          userId: user.id,
+          tenantId: user.tenantId,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          status: user.status,
+        },
+        {
+          tenantId: user.tenantId,
+        },
+      ),
+    );
 
     return UserMapper.toResponse(user);
   }
