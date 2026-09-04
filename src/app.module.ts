@@ -18,11 +18,13 @@ import { EventModule } from './modules/event/event.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ConfigModule } from './modules/config/config.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
     CommonModule,
     PrismaModule,
+    HealthModule,
     EventModule,
     TenantModule,
     AuthModule,
@@ -33,6 +35,7 @@ import { ConfigModule } from './modules/config/config.module';
     NotificationModule,
     AuditModule,
     StorageModule,
+    ConfigModule,
   ],
   controllers: [AppController],
   providers: [
