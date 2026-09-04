@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import {
+  HttpLoggingInterceptor,
+  HttpMetricsInterceptor,
+  RequestContextInterceptor,
+} from './modules/observability/interceptors';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -19,11 +24,13 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ConfigModule } from './modules/config/config.module';
 import { HealthModule } from './modules/health/health.module';
+import { ObservabilityModule } from './modules/observability/observability.module';
 
 @Module({
   imports: [
     CommonModule,
     PrismaModule,
+    ObservabilityModule,
     HealthModule,
     EventModule,
     TenantModule,
@@ -44,6 +51,18 @@ import { HealthModule } from './modules/health/health.module';
       provide: APP_INTERCEPTOR,
       useClass: ApiResponseInterceptor,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestContextInterceptor,
+    },
+    {
+  provide: APP_INTERCEPTOR,
+  useClass: HttpMetricsInterceptor,
+},
+{
+  provide: APP_INTERCEPTOR,
+  useClass: HttpLoggingInterceptor,
+},
   ],
 })
 export class AppModule {}

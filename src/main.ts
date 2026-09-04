@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { startTracing } from './modules/observability/tracing/tracing.bootstrap';
 
 import { AppModule } from './app.module';
 import {
@@ -8,7 +9,9 @@ import {
 } from './modules/config/services/app-config.service';
 
 async function bootstrap() {
-const app = await NestFactory.create(AppModule);
+  await startTracing();
+
+  const app = await NestFactory.create(AppModule);
 
 const configService =
   app.get(AppConfigService);
