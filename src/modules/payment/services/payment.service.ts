@@ -55,63 +55,84 @@ constructor(
 
     return PaymentMapper.toResponseList(payments);
   }
-  async update(
-    id: string,
-    user: AuthenticatedUser,
-    updatePaymentDto: UpdatePaymentDto,
-  ): Promise<PaymentResponse> {
-    const existingPayment = await this.paymentRepository.findById(id);
+async update(
+  id: string,
+  user: AuthenticatedUser,
+  updatePaymentDto: UpdatePaymentDto,
+): Promise<PaymentResponse> {
+  const existingPayment = await this.paymentRepository.findById(id);
 
-    if (!existingPayment) {
-      throw new NotFoundException(PaymentMessages.NOT_FOUND);
-    }
-
-    const updateData: UpdatePaymentData = {
-      provider: updatePaymentDto.provider,
-      method: updatePaymentDto.method,
-      currency: updatePaymentDto.currency,
-      amount: updatePaymentDto.amount,
-      status: updatePaymentDto.status,
-      gatewayTransactionId: updatePaymentDto.gatewayTransactionId ?? null,
-      failureReason: undefined,
-      metadata: updatePaymentDto.metadata ?? null,
-      updatedById: user.id,
-      version: existingPayment.version + 1,
-    };
-
-const updatedPayment = await this.paymentRepository.update(
-  id,
-  updateData,
-);
-
-if (
-  existingPayment.status !== PaymentStatus.COMPLETED &&
-  updatedPayment.status === PaymentStatus.COMPLETED
-) {
-  await this.eventService.publish(
-    new PaymentSucceededEvent(
-      {
-        paymentId: updatedPayment.id,
-        tenantId: updatedPayment.tenantId,
-        orderId: updatedPayment.orderId,
-        paymentReference: updatedPayment.paymentReference,
-        provider: updatedPayment.provider,
-        method: updatedPayment.method,
-        currency: updatedPayment.currency,
-        amount: Number(updatedPayment.amount),
-        status: updatedPayment.status,
-        gatewayTransactionId:
-          updatedPayment.gatewayTransactionId,
-      },
-      {
-        tenantId: updatedPayment.tenantId,
-      },
-    ),
-  );
-}
-
-return PaymentMapper.toResponse(updatedPayment);
+  if (!existingPayment) {
+    throw new NotFoundException(PaymentMessages.NOT_FOUND);
   }
+
+  const updateData: UpdatePaymentData = {
+    updatedById: user.id,
+    version: existingPayment.version + 1,
+  };
+
+  if (updatePaymentDto.provider !== undefined) {
+    updateData.provider = updatePaymentDto.provider;
+  }
+
+  if (updatePaymentDto.method !== undefined) {
+    updateData.method = updatePaymentDto.method;
+  }
+
+  if (updatePaymentDto.currency !== undefined) {
+    updateData.currency = updatePaymentDto.currency;
+  }
+
+  if (updatePaymentDto.amount !== undefined) {
+    updateData.amount = updatePaymentDto.amount;
+  }
+
+  if (updatePaymentDto.status !== undefined) {
+    updateData.status = updatePaymentDto.status;
+  }
+
+  if (updatePaymentDto.gatewayTransactionId !== undefined) {
+    updateData.gatewayTransactionId =
+      updatePaymentDto.gatewayTransactionId;
+  }
+
+  if (updatePaymentDto.metadata !== undefined) {
+    updateData.metadata = updatePaymentDto.metadata;
+  }
+
+  const updatedPayment = await this.paymentRepository.update(
+    id,
+    updateData,
+  );
+
+  if (
+    existingPayment.status !== PaymentStatus.COMPLETED &&
+    updatedPayment.status === PaymentStatus.COMPLETED
+  ) {
+    await this.eventService.publish(
+      new PaymentSucceededEvent(
+        {
+          paymentId: updatedPayment.id,
+          tenantId: updatedPayment.tenantId,
+          orderId: updatedPayment.orderId,
+          paymentReference: updatedPayment.paymentReference,
+          provider: updatedPayment.provider,
+          method: updatedPayment.method,
+          currency: updatedPayment.currency,
+          amount: Number(updatedPayment.amount),
+          status: updatedPayment.status,
+          gatewayTransactionId:
+            updatedPayment.gatewayTransactionId,
+        },
+        {
+          tenantId: updatedPayment.tenantId,
+        },
+      ),
+    );
+  }
+
+  return PaymentMapper.toResponse(updatedPayment);
+}
   async delete(id: string): Promise<PaymentResponse> {
     const existingPayment = await this.paymentRepository.findById(id);
 
