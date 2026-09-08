@@ -1,6 +1,7 @@
 import {
   CallHandler,
   ExecutionContext,
+  HttpException,
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
@@ -22,8 +23,11 @@ export class HttpLoggingInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<unknown> {
-    const request = context.switchToHttp().getRequest<Request>();
-    const response = context.switchToHttp().getResponse<Response>();
+    const request =
+      context.switchToHttp().getRequest<Request>();
+
+    const response =
+      context.switchToHttp().getResponse<Response>();
 
     const startedAt = Date.now();
 
@@ -36,12 +40,19 @@ export class HttpLoggingInterceptor implements NestInterceptor {
           false,
         );
       }),
+
       catchError((error: unknown) => {
+        const statusCode =
+          error instanceof HttpException
+            ? error.getStatus()
+            : response.statusCode;
+
         this.logRequest(
           request,
           response,
           startedAt,
           true,
+          statusCode,
         );
 
         return throwError(() => error);
@@ -54,9 +65,13 @@ export class HttpLoggingInterceptor implements NestInterceptor {
     response: Response,
     startedAt: number,
     isError: boolean,
+    errorStatusCode?: number,
   ): void {
     const durationMs = Date.now() - startedAt;
-    const route = request.route?.path ?? request.path;
+
+    const route =
+      request.route?.path ?? request.path;
+
     const correlationId =
       this.requestContext.getCorrelationId();
 
@@ -64,7 +79,8 @@ export class HttpLoggingInterceptor implements NestInterceptor {
       correlationId,
       method: request.method,
       route,
-      statusCode: response.statusCode,
+      statusCode:
+        errorStatusCode ?? response.statusCode,
       durationMs,
     };
 
