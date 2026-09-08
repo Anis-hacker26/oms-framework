@@ -5,6 +5,10 @@ import { EventService } from '../../event/services/event.service';
 import { PaymentSucceededEvent } from '../../event/events/payment-succeeded.event';
 import { PaymentMessages } from '../constants/payment.messages';
 import { CreatePaymentDto } from '../dto/create-payment.dto';
+import { PageDto } from '../../../common/pagination/dto/page.dto';
+import { PageMetaDto } from '../../../common/pagination/dto/page-meta.dto';
+
+import { ListPaymentsDto } from '../dto/list-payments.dto';
 import { UpdatePaymentDto } from '../dto/update-payment.dto';
 import { CreatePaymentData } from '../interfaces/create-payment-data.interface';
 import { PaymentResponse } from '../interfaces/payment-response.interface';
@@ -50,11 +54,28 @@ constructor(
 
     return PaymentMapper.toResponse(payment);
   }
-  async findAll(user: AuthenticatedUser): Promise<PaymentResponse[]> {
-    const payments = await this.paymentRepository.findAll(user.tenantId);
+async findAll(
+  user: AuthenticatedUser,
+  listPaymentsDto: ListPaymentsDto,
+): Promise<PageDto<PaymentResponse>> {
+  const { page, limit } = listPaymentsDto;
 
-    return PaymentMapper.toResponseList(payments);
-  }
+  const result = await this.paymentRepository.findAll({
+    tenantId: user.tenantId,
+    page,
+    limit,
+  });
+
+  const items = PaymentMapper.toResponseList(result.items);
+
+  const meta = new PageMetaDto(
+    page,
+    limit,
+    result.totalItems,
+  );
+
+  return new PageDto(items, meta);
+}
 async update(
   id: string,
   user: AuthenticatedUser,

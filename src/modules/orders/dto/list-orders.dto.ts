@@ -1,34 +1,10 @@
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 
-import { Type } from 'class-transformer';
+import { PageOptionsDto } from '../../../common/pagination/dto/page-options.dto';
 
 import { OrderStatus } from '../enums/order-status.enum';
 
-export class ListOrdersDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 10;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  search?: string;
-
+export class ListOrdersDto extends PageOptionsDto {
   @IsOptional()
   @IsEnum(OrderStatus)
   status?: OrderStatus;

@@ -1,0 +1,49 @@
+Sprint 24 — Performance Baseline
+
+Test:
+Order → Payment workflow
+
+Workload:
+10 VUs
+30 seconds
+Dockerized k6
+Local NestJS application
+
+Environment:
+Base URL: http://host.docker.internal:3000
+Database: PostgreSQL
+Cache: Redis
+
+Results:
+Completed iterations: 116
+HTTP requests: 580
+Request rate: 18.118804 req/s
+Iteration rate: 3.623761 iter/s
+
+HTTP error rate: 0.00%
+Checks: 928/928 passed
+
+HTTP latency:
+Average: 335.56 ms
+Median: 34.11 ms
+p90: 1.47 s
+p95: 1.61 s
+Maximum: 2.66 s
+
+Iteration latency:
+Average: 2.68 s
+Median: 2.61 s
+p90: 3.18 s
+p95: 3.33 s
+
+Initial assessment:
+The workload completed successfully with zero HTTP
+request failures and 100% successful checks.
+
+The median request latency was low, while p90/p95 latency
+was substantially higher, indicating tail-latency variation
+under concurrent workload.
+
+No application optimization was performed based solely on
+this baseline. Additional targeted testing is required before
+identifying a bottleneck.

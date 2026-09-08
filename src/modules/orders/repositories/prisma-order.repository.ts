@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Order } from '@prisma/client';
+import { Order, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../../database/prisma/prisma.service';
 import { CreateOrderData } from '../interfaces/create-order-data.interface';
 import { UpdateOrderData } from '../interfaces/update-order-data.interface';
 import { OrderRepository } from './order.repository';
+import { OrderListFilters } from '../interfaces/order-list-filters.interface';
+import { PaginatedResult } from '../../../common/pagination/interfaces/paginated-result.interface';
 
 @Injectable()
 export class PrismaOrderRepository extends OrderRepository {
@@ -52,17 +54,55 @@ export class PrismaOrderRepository extends OrderRepository {
     });
   }
 
-  async findAll(tenantId: string): Promise<Order[]> {
-    return this.prisma.order.findMany({
-      where: {
-        tenantId,
-        deletedAt: null,
-      },
+async findAll(
+  filters: OrderListFilters,
+): Promise<PaginatedResult<Order>> {
+  const where: Prisma.OrderWhereInput = {
+    tenantId: filters.tenantId,
+    deletedAt: null,
+
+    ...(filters.status && {
+      status: filters.status,
+    }),
+
+    ...(filters.search && {
+      OR: [
+        {
+          title: {
+            contains: filters.search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          orderNumber: {
+            contains: filters.search,
+            mode: 'insensitive',
+          },
+        },
+      ],
+    }),
+  };
+
+  const [items, totalItems] = await Promise.all([
+    this.prisma.order.findMany({
+      where,
       orderBy: {
         createdAt: 'desc',
       },
-    });
-  }
+      skip: (filters.page - 1) * filters.limit,
+      take: filters.limit,
+    }),
+
+    this.prisma.order.count({
+      where,
+    }),
+  ]);
+
+  return {
+    items,
+    totalItems,
+  };
+}
 
   async update(id: string, data: UpdateOrderData): Promise<Order> {
     return this.prisma.order.update({

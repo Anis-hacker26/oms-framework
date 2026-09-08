@@ -117,6 +117,43 @@ describe('Payment API (e2e)', () => {
     });
   });
 
+    describe('GET /orders', () => {
+    it('should retrieve paginated order list', async () => {
+      const pageOne = await auth(
+        request(app.getHttpServer()).get('/orders?page=1&limit=10'),
+      ).expect(200);
+
+      expect(pageOne.body.success).toBe(true);
+      expect(pageOne.body.message).toBe('Orders retrieved successfully.');
+
+      expect(Array.isArray(pageOne.body.data.items)).toBe(true);
+      expect(pageOne.body.data.items.length).toBeLessThanOrEqual(10);
+
+      expect(pageOne.body.data.meta.page).toBe(1);
+      expect(pageOne.body.data.meta.limit).toBe(10);
+      expect(pageOne.body.data.meta.totalItems).toBeGreaterThanOrEqual(1);
+      expect(pageOne.body.data.meta.totalPages).toBeGreaterThanOrEqual(1);
+
+      const pageTwo = await auth(
+        request(app.getHttpServer()).get('/orders?page=2&limit=10'),
+      ).expect(200);
+
+      expect(pageTwo.body.success).toBe(true);
+
+      expect(Array.isArray(pageTwo.body.data.items)).toBe(true);
+      expect(pageTwo.body.data.items.length).toBeLessThanOrEqual(10);
+
+      expect(pageTwo.body.data.meta.page).toBe(2);
+      expect(pageTwo.body.data.meta.limit).toBe(10);
+
+      if (pageTwo.body.data.items.length > 0) {
+        expect(pageTwo.body.data.items[0].id).not.toBe(
+          pageOne.body.data.items[0]?.id,
+        );
+      }
+    });
+  });
+
   describe('GET /payments', () => {
     it('should retrieve payment list', async () => {
       const response = await auth(
@@ -125,13 +162,22 @@ describe('Payment API (e2e)', () => {
 
       expect(response.body.success).toBe(true);
 
-      expect(response.body.message).toBe('Payments retrieved successfully.');
+expect(response.body.message).toBe('Payments retrieved successfully.');
 
-      expect(Array.isArray(response.body.data)).toBe(true);
+expect(Array.isArray(response.body.data.items)).toBe(true);
 
-      expect(
-        response.body.data.some((payment: any) => payment.id === paymentId),
-      ).toBe(true);
+expect(response.body.data.meta).toBeDefined();
+
+expect(
+  response.body.data.items.some(
+    (payment: any) => payment.id === paymentId,
+  ),
+).toBe(true);
+
+expect(response.body.data.meta.page).toBe(1);
+expect(response.body.data.meta.limit).toBe(10);
+
+expect(response.body.data.items.length).toBeLessThanOrEqual(10);
     });
   });
 

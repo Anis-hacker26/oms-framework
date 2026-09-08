@@ -1,7 +1,9 @@
 import { Order } from '@prisma/client';
 
 import { CreateOrderData } from '../interfaces/create-order-data.interface';
+import { OrderListFilters } from '../interfaces/order-list-filters.interface';
 import { UpdateOrderData } from '../interfaces/update-order-data.interface';
+import { PaginatedResult } from '../../../common/pagination/interfaces/paginated-result.interface';
 
 export abstract class OrderRepository {
   abstract create(data: CreateOrderData): Promise<Order>;
@@ -13,7 +15,9 @@ export abstract class OrderRepository {
     orderNumber: string,
   ): Promise<Order | null>;
 
-  abstract findAll(tenantId: string): Promise<Order[]>;
+  abstract findAll(
+    filters: OrderListFilters,
+  ): Promise<PaginatedResult<Order>>;
 
   abstract update(id: string, data: UpdateOrderData): Promise<Order>;
 

@@ -3,6 +3,9 @@ import { OrderStatus } from '@prisma/client';
 
 import { OrderMessages } from '../constants/order.messages';
 import { CreateOrderDto } from '../dto/create-order.dto';
+import { PageDto } from '../../../common/pagination/dto/page.dto';
+import { PageMetaDto } from '../../../common/pagination/dto/page-meta.dto';
+import { ListOrdersDto } from '../dto/list-orders.dto';
 import { UpdateOrderDto } from '../dto/update-order.dto';
 import { CreateOrderData } from '../interfaces/create-order-data.interface';
 import { OrderResponse } from '../interfaces/order-response.interface';
@@ -65,11 +68,29 @@ return OrderMapper.toResponse(order);
     return OrderMapper.toResponse(order);
   }
 
-  async findAll(user: AuthenticatedUser): Promise<OrderResponse[]> {
-    const orders = await this.orderRepository.findAll(user.tenantId);
+async findAll(
+  user: AuthenticatedUser,
+  filters: ListOrdersDto,
+): Promise<PageDto<OrderResponse>> {
+  const result = await this.orderRepository.findAll({
+    tenantId: user.tenantId,
+    page: filters.page,
+    limit: filters.limit,
+    search: filters.search,
+    status: filters.status,
+  });
 
-    return OrderMapper.toResponseList(orders);
-  }
+  const meta = new PageMetaDto(
+    filters.page,
+    filters.limit,
+    result.totalItems,
+  );
+
+  return new PageDto(
+    OrderMapper.toResponseList(result.items),
+    meta,
+  );
+}
 
   async update(
     id: string,

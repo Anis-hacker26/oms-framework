@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
@@ -35,6 +36,11 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { SuccessMessage } from '../../../common/decorators/success-message.decorator';
 
 import { PaymentMessages } from '../constants/payment.messages';
+
+
+import { ListPaymentsDto } from '../dto/list-payments.dto';
+import { PageDto } from '../../../common/pagination/dto/page.dto';
+import { PaymentResponse } from '../interfaces/payment-response.interface';
 
 import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { UpdatePaymentDto } from '../dto/update-payment.dto';
@@ -89,16 +95,15 @@ export class PaymentController {
   })
   @ApiOkResponse({
     description: PaymentMessages.LISTED,
-    type: PaymentResponseDto,
-    isArray: true,
   })
   @ApiForbiddenResponse({
     description: 'You do not have permission to perform this action.',
   })
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<PaymentResponseDto[]> {
-    return this.paymentService.findAll(user);
+    @Query() listPaymentsDto: ListPaymentsDto,
+  ): Promise<PageDto<PaymentResponse>> {
+    return this.paymentService.findAll(user, listPaymentsDto);
   }
 
   @Permissions(Permission.PAYMENT_READ)

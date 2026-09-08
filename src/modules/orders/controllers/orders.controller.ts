@@ -4,8 +4,10 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -25,7 +27,6 @@ import {
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
-import { ParseUUIDPipe } from '@nestjs/common';
 
 import { Permission } from '../../../common/authorization/enums/permission.enum';
 import { Permissions } from '../../../common/authorization/decorators/permissions.decorator';
@@ -41,6 +42,9 @@ import { UpdateOrderDto } from '../dto/update-order.dto';
 import { OrderResponseDto } from '../dto/order-response.dto';
 
 import { OrdersService } from '../services/orders.service';
+import { OrderResponse } from '../interfaces/order-response.interface';
+import { PageDto } from 'src/common/pagination/dto/page.dto';
+import { ListOrdersDto } from '../dto/list-orders.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Orders')
@@ -97,8 +101,9 @@ export class OrdersController {
   })
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<OrderResponseDto[]> {
-    return this.ordersService.findAll(user);
+    @Query() filters: ListOrdersDto,
+  ): Promise<PageDto<OrderResponse>> {
+    return this.ordersService.findAll(user, filters);
   }
 
   @Permissions(Permission.ORDER_READ)
